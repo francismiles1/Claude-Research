@@ -471,6 +471,41 @@ def render_zone_metrics(zone_area: float,
     cols[4].metric("Ops floor", f"{ops_floor:.0%}")
 
 
+# Archetype descriptions — what each project type represents
+ARCHETYPE_DESCRIPTIONS = {
+    "#1 Micro Startup": "1-3 person team, no process, pure hustle. Moving fast with minimal governance. "
+        "Success depends almost entirely on individual effort and speed to market.",
+    "#2 Small Agile": "Small team (5-15) with lightweight agile practices. Some structure emerging but "
+        "still informal. Standups and sprints, but documentation is minimal.",
+    "#3 Scaling Startup": "Growing from small to mid-size (15-50+). Processes straining under growth. "
+        "What worked at 10 people breaks at 40. Key challenge: adding structure without killing speed.",
+    "#4 DevOps Native": "Team built around automation from day one. CI/CD, infrastructure as code, "
+        "monitoring. High operational output sustained through tooling rather than formal process.",
+    "#5 Component Heroes": "Multiple teams, each owning components, but weak cross-team coordination. "
+        "Individual teams perform well; integration and coherence are the pain points.",
+    "#6 Matrix Programme": "Large cross-functional programme with matrix reporting. Multiple workstreams, "
+        "dependencies, and governance layers. Coordination cost is the dominant challenge.",
+    "#7 Outsource-Managed": "Significant outsourced delivery with in-house management. Split accountability, "
+        "contract boundaries, and communication overhead define the operating model.",
+    "#8 Reg Stage-Gate": "Heavily regulated, formal stage-gate delivery. Compliance-driven governance with "
+        "mandatory quality gates, audit trails, and sign-off processes. Slow but controlled.",
+    "#9 Ent Balanced": "Mature enterprise with balanced capability and operations. Well-funded, stable teams, "
+        "established processes. The 'gold standard' operating model with resources to match.",
+    "#10 Legacy Maintenance": "Skeleton crew maintaining ageing systems. Minimal budget, high staff turnover, "
+        "no investment in improvement. 'Keep the lights on' mode.",
+    "#11 Modernisation": "Legacy system being actively modernised. Investment starting to flow but the team "
+        "is still building capability. Transitional state between legacy and modern.",
+    "#12 Crisis/Firefight": "Project in active crisis. Process has broken down, team is firefighting, "
+        "governance is reactive. Everything is urgent, nothing is planned.",
+    "#13 Planning/Pre-Deliv": "Pre-delivery phase — requirements, architecture, planning. High capability "
+        "investment but almost zero operational output yet. All preparation, no delivery.",
+    "#14 Platform/Internal": "Internal platform or tooling team. Low external stakes, high automation, "
+        "well-architected. The team builds for internal users with forgiving requirements.",
+    "#15 Regulated Startup": "Startup operating in a regulated industry (fintech, healthtech). Must meet "
+        "compliance requirements with startup resources. High ambition, constrained budget.",
+}
+
+
 # Full dimension labels for the profile chart
 DIMENSION_LABELS = [
     "Consequence",
@@ -496,16 +531,31 @@ DIMENSION_DESCRIPTIONS = {
 }
 
 
+# Dimensions where higher values are BETTER (not more demanding)
+_INVERTED_DIMS = {"Team Stability", "Coherence"}
+
+
 def render_dimension_chart(dims: list[int]):
     """Horizontal bar chart showing the 8 dimension values (1-5) with descriptions."""
     colours = []
-    for v in dims:
-        if v <= 2:
-            colours.append("#4CAF50")   # Low = green (less demanding)
-        elif v <= 3:
-            colours.append("#FFD54F")   # Medium = amber
+    for label, v in zip(DIMENSION_LABELS, dims):
+        inverted = label in _INVERTED_DIMS
+        if inverted:
+            # High = good (green), low = bad (red)
+            if v >= 4:
+                colours.append("#4CAF50")
+            elif v >= 3:
+                colours.append("#FFD54F")
+            else:
+                colours.append("#E57373")
         else:
-            colours.append("#E57373")   # High = red (more demanding)
+            # High = demanding (red), low = easy (green)
+            if v <= 2:
+                colours.append("#4CAF50")
+            elif v <= 3:
+                colours.append("#FFD54F")
+            else:
+                colours.append("#E57373")
 
     # Build hover text with descriptions
     hover_texts = []
@@ -536,14 +586,17 @@ def render_dimension_chart(dims: list[int]):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Compact text summary of key dimensions
-    highlights = []
+    # Full dimension breakdown in a visible box
+    lines = []
     for label, v in zip(DIMENSION_LABELS, dims):
         desc = DIMENSION_DESCRIPTIONS[label].get(v, "")
-        if v <= 2 or v >= 4:  # Only show notable values
-            highlights.append(f"**{label}** ({v}): {desc}")
-    if highlights:
-        st.caption(" | ".join(highlights))
+        inverted = label in _INVERTED_DIMS
+        if inverted:
+            indicator = "🟢" if v >= 4 else ("🟡" if v >= 3 else "🔴")
+        else:
+            indicator = "🟢" if v <= 2 else ("🟡" if v <= 3 else "🔴")
+        lines.append(f"{indicator} **{label}** = {v}/5 — {desc}")
+    st.markdown("\n\n".join(lines))
 
 
 def render_cost_breakdown(bd: dict):
@@ -679,8 +732,9 @@ def main():
     cap_floor = compute_cap_floor(dims)
     ops_floor = compute_ops_floor(dims)
 
-    # Header
+    # Header and archetype description
     st.header(f"{archetype} — Viable Zone: {zone_area:.1f}%")
+    st.info(ARCHETYPE_DESCRIPTIONS.get(archetype, ""), icon="📋")
 
     # Side-by-side layout: heatmap left, inspect+breakdown right
     col_map, col_detail = st.columns([3, 2])
