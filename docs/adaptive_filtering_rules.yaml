@@ -1,0 +1,1226 @@
+# Adaptive Filtering Rules Configuration
+# Rules for intelligent question filtering to reduce assessment burden
+# Version: 1.0
+
+version: "1.0"
+description: "Rules for adaptive question filtering - reduces ~266 questions to 80-120 relevant items"
+
+# Filter application order (priority: 1 = highest)
+filter_order:
+  - type: context_filter
+    priority: 1
+    description: "Global scope overrides all"
+  - type: level_prerequisite
+    priority: 2
+    description: "Don't assess unreachable levels"
+  - type: category_dependency
+    priority: 3
+    description: "Don't assess non-existent things"
+  - type: cross_framework_propagation
+    priority: 4
+    description: "Avoid redundancy"
+  - type: progressive_disclosure
+    priority: 5
+    description: "UX optimisation"
+
+# ============================================
+# LEVEL PREREQUISITE RULES
+# Skip higher-level questions if foundation not achieved
+# ============================================
+level_prerequisites:
+  # TMMi Level Prerequisites
+  - id: LP-TMMI-001
+    description: "Skip TMMi L3-L5 if L2 score below 50%"
+    framework: tmmi
+    condition:
+      level: 2
+      score_below: 50
+    action:
+      type: skip_levels
+      target_levels: [3, 4, 5]
+    user_message: "Focus on Level 2 foundations before assessing higher levels"
+
+  - id: LP-TMMI-002
+    description: "Skip TMMi L4-L5 if L3 score below 50%"
+    framework: tmmi
+    condition:
+      level: 3
+      score_below: 50
+    action:
+      type: skip_levels
+      target_levels: [4, 5]
+    user_message: "Achieve Level 3 before Level 4-5 assessment"
+
+  - id: LP-TMMI-003
+    description: "Skip TMMi L5 if L4 score below 50%"
+    framework: tmmi
+    condition:
+      level: 4
+      score_below: 50
+    action:
+      type: skip_levels
+      target_levels: [5]
+    user_message: "Level 5 requires strong Level 4 foundations"
+
+  # DORA Level Prerequisites
+  - id: LP-DORA-001
+    description: "Skip DORA L3-L5 if L2 domains weak"
+    framework: dora
+    condition:
+      level: 2
+      score_below: 40
+    action:
+      type: skip_levels
+      target_levels: [3, 4, 5]
+    user_message: "Establish basic CI/CD before advanced practices"
+
+  - id: LP-DORA-002
+    description: "Skip DORA L4-L5 if L3 weak"
+    framework: dora
+    condition:
+      level: 3
+      score_below: 50
+    action:
+      type: skip_levels
+      target_levels: [4, 5]
+    user_message: "Strengthen L3 DevOps practices before advanced assessment"
+
+  # ISO 9001 Level Prerequisites
+  - id: LP-ISO-001
+    description: "Skip ISO 9001 L3-L5 if operations (L2) weak"
+    framework: iso9001
+    condition:
+      level: 2
+      score_below: 50
+    action:
+      type: skip_levels
+      target_levels: [3, 4, 5]
+    user_message: "Strengthen operations (Clause 8) before advanced evaluation"
+
+  - id: LP-ISO-002
+    description: "Skip ISO 9001 L4-L5 if L3 clauses weak"
+    framework: iso9001
+    condition:
+      level: 3
+      score_below: 50
+    action:
+      type: skip_levels
+      target_levels: [4, 5]
+    user_message: "Achieve ISO L3 before evaluating performance improvement"
+
+# ============================================
+# CATEGORY DEPENDENCY RULES
+# Skip questions based on prior answers
+# ============================================
+category_dependencies:
+  # No suppliers = skip supplier questions
+  - id: CD-001
+    description: "No suppliers - skip supplier management"
+    trigger:
+      question_id: TPT-O1
+      operator: equals
+      value: 0
+    action:
+      type: skip_questions
+      questions:
+        - TPT-C2
+        - TPT-C3
+        - TPT-C4
+        - TPT-O2
+        - TPT-O3
+        - TPT-O4
+    user_message: "No external suppliers identified - skipping supplier management questions"
+
+  # No automation = skip automation health questions
+  - id: CD-002
+    description: "No automation - skip automation health"
+    trigger:
+      question_id: TAM-O1
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - TAM-O2
+        - TAM-O3
+        - TAM-O4
+        - TAM-C1
+        - TAM-C2
+        - TAM-C3
+    user_message: "No automation in place - skipping automation health questions"
+
+  # No test lead = skip test lead authority questions
+  - id: CD-003
+    description: "No test lead - skip authority questions"
+    trigger:
+      question_id: GOV-C1
+      operator: equals
+      value: false
+    action:
+      type: skip_questions
+      questions:
+        - GOV-C2
+        - GOV-O1
+        - GOV-O2
+    user_message: "No dedicated test lead - skipping test lead authority questions"
+
+  # Legacy code = ADD legacy-specific questions
+  - id: CD-004
+    description: "Legacy code detected - add legacy questions"
+    trigger:
+      question_id: ARC-C5
+      operator: equals
+      value: true
+    action:
+      type: add_questions
+      questions:
+        - ARC-C5a
+        - ARC-C5b
+        - ARC-C5c
+    user_message: "Legacy code/systems detected - adding legacy assessment questions"
+
+  # No CI/CD pipeline = skip pipeline health questions
+  # VALID EDGE-CASE: No current persona triggers this (all use some CI/CD)
+  - id: CD-006
+    description: "No CI/CD - skip pipeline health"
+    trigger:
+      question_id: ENV-O3
+      operator: in
+      value: ["none", "manual_only"]
+    action:
+      type: skip_questions
+      questions:
+        - ENV-O4
+        - ENV-O5
+        - DEV-O3
+    user_message: "No CI/CD pipeline - skipping pipeline health questions"
+
+  # No performance testing = skip performance questions
+  # VALID EDGE-CASE: No current persona triggers this (all have perf testing)
+  - id: CD-007
+    description: "No performance testing - skip perf questions"
+    trigger:
+      question_id: TST-C4
+      operator: equals
+      value: "no"  # String value, not boolean - matches TST-C4 option
+    action:
+      type: skip_questions
+      questions:
+        - TST-O4
+        - TST-O5
+    user_message: "No performance testing capability - skipping performance metrics"
+
+  # Defect origin tracking enables phase leakage questions
+  # Skip until DFM-C3 is answered with a value other than 'none'
+  - id: CD-009
+    description: "Defect origin not tracked - skip phase leakage"
+    trigger:
+      question_id: DFM-C3
+      operator: not_in
+      value: ["informal", "field", "enforced"]
+    action:
+      type: skip_questions
+      questions: []  # DFL-O1 through DFL-O4 replaced by PROPOSED-DFM-04
+    user_message: "Answer defect origin tracking question first"
+
+  # ===========================================
+  # HOLISTIC DEFECT MANAGEMENT GATING (v4.0)
+  # Replaces CD-016 and CD-017 with PROPOSED-DFM-* gating
+  # ===========================================
+
+  # Gate detailed defect questions behind maturity level
+  - id: CD-DFM-GATE-NONE
+    description: "Skip detailed defect questions when no process exists"
+    trigger:
+      question_id: PROPOSED-DFM-01
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - PROPOSED-DFM-02  # Defect counts by severity
+        - PROPOSED-DFM-03  # Targets matrix
+        - PROPOSED-DFM-04  # Phase leakage
+        - PROPOSED-DFM-05  # Trends and cycle times
+    user_message: "Defect process is 'None' - skipping detailed defect questions"
+
+  - id: CD-DFM-GATE-INFORMAL
+    description: "Skip target questions when process is only informal"
+    trigger:
+      question_id: PROPOSED-DFM-01
+      operator: in
+      value: ["none", "informal"]
+    action:
+      type: skip_questions
+      questions:
+        - PROPOSED-DFM-03  # Targets matrix (no targets to report)
+    user_message: "Defect process too informal to have defined targets"
+
+  # NOTE: Phase-specific TPP questions (CD-010 through CD-015) are OBSOLETE
+  # PROPOSED-TPP-PHASE is a phase_adaptive_matrix that automatically
+  # renders only rows for phases present in TPP-O1 answer.
+  # No additional filtering rules needed.
+
+  # Keep system/UAT test cycle questions gated
+  - id: CD-012-CYCLES
+    description: "System testing not active - skip system cycle questions"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "system"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-CY1
+        - TPP-CY2
+    user_message: "System testing not active - skipping system cycle questions"
+
+  - id: CD-014-CYCLES
+    description: "UAT not active - skip UAT cycle questions"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "uat"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-CY3
+        - TPP-CY4
+    user_message: "UAT not active - skipping UAT cycle questions"
+
+  # No leadership development path = skip leadership scaling questions
+  - id: CD-008
+    description: "No leadership development path - skip scaling questions"
+    trigger:
+      question_id: GOV-O4
+      operator: equals
+      value: false
+    action:
+      type: skip_questions
+      questions:
+        - GOV-C4
+        - GOV-O5
+        # GOV-O6 RETIRED: duplicate of TST-O4
+    user_message: "No leadership development path - skipping leadership scaling questions"
+
+  # No test metrics = skip metrics review question
+  - id: CD-029
+    description: "No test metrics collected - skip metrics review frequency"
+    trigger:
+      question_id: TST-O4
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - FBK-O2
+    user_message: "No test metrics collected - skipping metrics review question"
+
+  # ===========================================
+  # PHASE PASS RATE GATING - OBSOLETE (v4.0)
+  # TPP-O2 through TPP-O7 have been replaced by PROPOSED-TPP-PHASE
+  # The phase_adaptive_matrix type automatically renders only rows
+  # for phases present in TPP-O1 - no explicit gating rules needed.
+  # ===========================================
+
+  # ===========================================
+  # LIFECYCLE CONFIDENCE GATING (kept from v3.0)
+  # Gate TPP-O10 through TPP-O14 by project phases
+  # ===========================================
+  - id: CD-024
+    description: "Discovery not active - skip discovery confidence"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "discovery"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-O10
+    user_message: "Discovery not active - skipping discovery confidence question"
+
+  - id: CD-025
+    description: "Requirements not active - skip requirements confidence"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "requirements"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-O11
+    user_message: "Requirements not active - skipping requirements confidence question"
+
+  - id: CD-026
+    description: "Design not active - skip design confidence"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "design"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-O12
+    user_message: "Design not active - skipping design confidence question"
+
+  - id: CD-027
+    description: "Release not active - skip release confidence"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "release"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-O13
+    user_message: "Release not active - skipping release confidence question"
+
+  - id: CD-028
+    description: "Hypercare not active - skip hypercare confidence"
+    trigger:
+      question_id: TPP-O1
+      operator: not_contains
+      value: "hypercare"
+    action:
+      type: skip_questions
+      questions:
+        - TPP-O14
+    user_message: "Hypercare not active - skipping hypercare confidence question"
+
+# ============================================
+# SECOND-LEVEL BRANCH RULES
+# Compound conditions that unlock deep-dive question groups
+# ============================================
+second_level_branches:
+  - id: SLB-001
+    branch_id: life_safety_regulatory
+    branch_label: "Life-Safety Compliance Deep-Dive"
+    description: "Life-safety regulatory standards detected"
+    trigger:
+      conditions:
+        - context_field: regulatory_standards
+          operator: contains_any
+          value: ["fda", "hipaa", "iso_13485"]
+    action:
+      type: add_questions
+      questions: [RC-LS-01, RC-LS-02, RC-LS-03, RC-LS-04, RC-LS-05]
+    user_message: "Life-safety regulatory standards detected - adding compliance deep-dive"
+
+  - id: SLB-002
+    branch_id: automation_diagnostics
+    branch_label: "Automation Diagnostics"
+    description: "Automation in troubled state"
+    trigger:
+      conditions:
+        - question_id: TAM-O1
+          operator: in
+          value: ["struggling", "failing"]
+    action:
+      type: add_questions
+      questions: [TAM-DX-01, TAM-DX-02, TAM-DX-03, TAM-DX-04, TAM-DX-05, TAM-DX-06]
+    user_message: "Automation issues detected - adding diagnostic questions"
+
+  - id: SLB-003
+    branch_id: enterprise_scale_ops
+    branch_label: "Enterprise Scale Operations"
+    description: "Enterprise multinational context"
+    trigger:
+      conditions:
+        - context_field: scale
+          operator: equals
+          value: "enterprise"
+        - context_field: geographic
+          operator: in
+          value: ["multinational", "global"]
+    action:
+      type: add_questions
+      questions: [SC-ENT-01, SC-ENT-02, SC-ENT-03, SC-ENT-04, SC-ENT-05]
+    user_message: "Enterprise multinational context - adding scale operations questions"
+
+  - id: SLB-004
+    branch_id: legacy_complexity
+    branch_label: "Legacy System Complexity"
+    description: "Significant undocumented legacy code"
+    trigger:
+      conditions:
+        - question_id: ARC-C5b
+          operator: greater_than_or_equal
+          value: 50
+        - question_id: ARC-C5c
+          operator: equals
+          value: "none"
+    action:
+      type: add_questions
+      questions: [ARC-LG-01, ARC-LG-02, ARC-LG-03, ARC-LG-04]
+    user_message: "Significant undocumented legacy code detected - adding complexity assessment"
+
+  - id: SLB-005
+    branch_id: supplier_quality
+    branch_label: "Supplier Quality Deep-Dive"
+    description: "Multiple suppliers with high defect rate"
+    trigger:
+      conditions:
+        - question_id: TPT-O1
+          operator: greater_than_or_equal
+          value: 5
+        - question_id: TPT-O3
+          operator: greater_than_or_equal
+          value: 20
+    action:
+      type: add_questions
+      questions: [TPT-SQ-01, TPT-SQ-02, TPT-SQ-03, TPT-SQ-04]
+    user_message: "Multiple suppliers with high defect rate - adding supplier quality deep-dive"
+
+  - id: SLB-006
+    branch_id: governance_authority_gap
+    branch_label: "Governance Authority Gap"
+    description: "Test lead lacks release authority"
+    trigger:
+      conditions:
+        - question_id: GOV-C1
+          operator: equals
+          value: true
+        - question_id: GOV-C2
+          operator: in
+          value: ["no", "escalate_only"]
+    action:
+      type: add_questions
+      questions: [GOV-AG-01, GOV-AG-02, GOV-AG-03]
+    user_message: "Test lead lacks release authority - adding governance gap assessment"
+
+  # Automotive Regulatory Compliance
+  - id: SLB-007
+    branch_id: automotive_regulatory
+    branch_label: "Automotive Safety & Compliance Deep-Dive"
+    description: "Automotive regulatory standards detected (ISO 26262, ASPICE, ISO 21434)"
+    trigger:
+      conditions:
+        - context_field: regulatory_standards
+          operator: contains_any
+          value: ["iso_26262", "aspice", "iso_21434", "autosar"]
+    action:
+      type: add_questions
+      questions: [RC-AUTO-01, RC-AUTO-02, RC-AUTO-03, RC-AUTO-04, RC-AUTO-05, RC-AUTO-06, RC-AUTO-07, RC-AUTO-08]
+    user_message: "Automotive regulatory standards detected - adding safety and compliance assessment"
+
+# ============================================
+# REACTIVE TRIGGER METADATA
+# Questions whose answers affect other questions' visibility
+# ============================================
+reactive_triggers:
+  TPT-O1:
+    triggers_rules: [CD-001, SLB-005]
+    tooltip: "Your answer may show or hide supplier-related questions"
+  TAM-O1:
+    triggers_rules: [CD-002, SLB-002]
+    tooltip: "Your answer may show or hide automation-related questions"
+  GOV-C1:
+    triggers_rules: [CD-003, SLB-006]
+    tooltip: "Your answer may show or hide governance authority questions"
+  ARC-C5:
+    triggers_rules: [CD-004, SLB-004]
+    tooltip: "Your answer may show or hide legacy system questions"
+  ENV-O3:
+    triggers_rules: [CD-006]
+    tooltip: "Your answer may show or hide CI/CD pipeline questions"
+    # CD-006: Valid edge-case rule - no current persona uses none/manual_only CI/CD
+  TST-C4:
+    triggers_rules: [CD-007]
+    tooltip: "Your answer may show or hide test metrics and release alignment questions"
+    # CD-007: Hides TST-O4, TST-O5 when answered "no"
+  TST-O4:
+    triggers_rules: [CD-029]
+    tooltip: "Your answer may show or hide metrics review questions"
+    # CD-029: Hides FBK-O2 when answered "none"
+  GOV-O4:
+    triggers_rules: [CD-008]
+    tooltip: "Your answer may show or hide team scaling questions"
+  ARC-C5b:
+    triggers_rules: [SLB-004]
+    tooltip: "Your answer may unlock legacy complexity deep-dive questions"
+  ARC-C5c:
+    triggers_rules: [SLB-004]
+    tooltip: "Your answer may unlock legacy complexity deep-dive questions"
+  TPT-O3:
+    triggers_rules: [SLB-005]
+    tooltip: "Your answer may unlock supplier quality deep-dive questions"
+  GOV-C2:
+    triggers_rules: [SLB-006]
+    tooltip: "Your answer may unlock governance authority gap questions"
+  # OBSOLETE: DFM-C1, DFM-C3, DFM-C4 replaced by PROPOSED-DFM-* holistic questions
+  # CD-016 and CD-017 replaced by CD-DFM-GATE-NONE and CD-DFM-GATE-INFORMAL
+  PROPOSED-DFM-01:
+    triggers_rules: [CD-DFM-GATE-NONE, CD-DFM-GATE-INFORMAL]
+    tooltip: "Your answer may show or hide detailed defect management questions"
+  # OBSOLETE: CD-010 through CD-015 replaced by PROPOSED-TPP-PHASE adaptive matrix
+  # TPP-O1 still triggers the matrix question and cycle questions
+  TPP-O1:
+    triggers_rules: [CD-012-CYCLES, CD-014-CYCLES, CD-024, CD-025, CD-026, CD-027, CD-028]
+    tooltip: "Your answer determines which phase-specific questions appear"
+
+# ============================================
+# CONTEXT FILTER RULES
+# Filter based on project context
+# ============================================
+context_filters:
+  # Unregulated projects - reduce ISO 9001 scope
+  - id: CF-001
+    description: "Unregulated - reduce ISO 9001 scope"
+    trigger:
+      context_field: regulatory_applicable
+      operator: equals
+      value: false
+    action:
+      type: reduce_framework
+      framework: iso9001
+      keep_only_clauses:
+        - "8.1"    # Operational planning
+        - "8.5"    # Production/service provision
+        - "8.6"    # Release of products
+        - "9.1.1"  # General monitoring
+    user_message: "Unregulated project - simplified compliance assessment"
+
+  # Small scale projects - simplify environment questions
+  - id: CF-002
+    description: "Small scale - simplify environment questions"
+    trigger:
+      context_field: scale
+      operator: equals
+      value: "small"
+    action:
+      type: simplify_category
+      category: environment
+      keep_questions:
+        - ENV-C2
+        - ENV-O1
+        - ENV-O3
+    user_message: "Small scale project - using simplified environment assessment"
+
+  # Traditional/waterfall delivery - reduce DORA scope
+  - id: CF-003
+    description: "Traditional delivery - reduce DORA scope"
+    trigger:
+      context_field: delivery_model
+      operator: in
+      value: ["waterfall", "hybrid_traditional"]
+    action:
+      type: reduce_framework
+      framework: dora
+      keep_only_pas:
+        - PA-001   # Measurement (core metrics only)
+        - PA-008   # Test strategy
+        - PA-010   # Architecture basics
+    user_message: "Traditional delivery model - focusing on core DORA metrics"
+
+  # Early project phase - reduce operational questions
+  - id: CF-004
+    description: "Early phase - reduce operational questions"
+    trigger:
+      context_field: project_phase
+      operator: in
+      value: ["initiation", "planning"]
+    action:
+      type: reduce_dimension
+      dimension: operational
+      keep_percentage: 30
+    user_message: "Early project phase - limited operational data expected"
+
+  # Late project phase - emphasise operational questions
+  - id: CF-005
+    description: "Late phase - emphasise operational"
+    trigger:
+      context_field: project_phase
+      operator: in
+      value: ["transition", "closure", "maintenance"]
+    action:
+      type: reduce_dimension
+      dimension: capability
+      keep_percentage: 50
+    user_message: "Late project phase - focusing on operational metrics"
+
+  # Startup context - streamlined assessment
+  - id: CF-006
+    description: "Startup - streamlined assessment"
+    trigger:
+      context_field: organisation_type
+      operator: equals
+      value: "startup"
+    action:
+      type: reduce_all
+      keep_percentage: 60
+      priority: "high_impact"
+    user_message: "Startup context - streamlined assessment focusing on high-impact areas"
+
+  # Enterprise context - comprehensive assessment
+  - id: CF-007
+    description: "Enterprise - comprehensive assessment"
+    trigger:
+      context_field: scale
+      operator: in
+      value: ["large", "enterprise"]
+    action:
+      type: expand_categories
+      categories:
+        - third_party
+        - governance
+        - environment
+    user_message: "Enterprise context - expanded assessment for scale-sensitive areas"
+
+# ============================================
+# CROSS-FRAMEWORK PROPAGATION RULES
+# Use answers from one framework to pre-populate others
+# ============================================
+cross_framework_propagation:
+  # Strong TMMi L2 indicates good basics
+  - id: CFP-001
+    description: "Strong TMMi L2 pre-populates equivalent project risk questions"
+    trigger:
+      framework: tmmi
+      level: 2
+      score_threshold: 80
+    action:
+      type: pre_populate
+      targets:
+        - question_id: DEV-C2
+          value: L
+          confidence: 0.75
+        - question_id: TST-C1
+          value: L
+          confidence: 0.75
+        - question_id: REQ-C3
+          value: L
+          confidence: 0.70
+      allow_override: true
+    user_message: "Strong TMMi Level 2 detected - pre-populating equivalent questions"
+
+  # Weak TMMi L2 indicates foundation issues
+  - id: CFP-002
+    description: "Weak TMMi L2 pre-populates risk questions as weak"
+    trigger:
+      framework: tmmi
+      level: 2
+      score_below: 30
+    action:
+      type: pre_populate
+      targets:
+        - question_id: DEV-C2
+          value: P
+          confidence: 0.70
+        - question_id: TST-C1
+          value: P
+          confidence: 0.70
+      allow_override: true
+    user_message: "Weak TMMi Level 2 detected - pre-populating with caution"
+
+  # Strong DORA CI indicates good build practices
+  - id: CFP-003
+    description: "Strong DORA CI pre-populates development questions"
+    trigger:
+      framework: dora
+      domain: CI
+      score_threshold: 75
+    action:
+      type: pre_populate
+      targets:
+        - question_id: DEV-O3
+          value: 85
+          confidence: 0.80
+        - question_id: DEV-C4
+          value: L
+          confidence: 0.75
+        - question_id: ENV-O3
+          value: "established"
+          confidence: 0.85
+      allow_override: true
+    user_message: "Strong DORA CI practices detected - pre-populating development questions"
+
+  # Strong DORA CD indicates good deployment practices
+  - id: CFP-004
+    description: "Strong DORA CD pre-populates change questions"
+    trigger:
+      framework: dora
+      domain: CD
+      score_threshold: 75
+    action:
+      type: pre_populate
+      targets:
+        - question_id: CHG-C3
+          value: L
+          confidence: 0.80
+        - question_id: ENV-O4
+          value: 90
+          confidence: 0.75
+      allow_override: true
+    user_message: "Strong DORA CD practices detected - pre-populating deployment questions"
+
+  # Strong ISO 9001 Clause 8 indicates good operations
+  - id: CFP-005
+    description: "Strong ISO Clause 8 pre-populates change control"
+    trigger:
+      framework: iso9001
+      clause: "8"
+      score_threshold: 70
+    action:
+      type: pre_populate
+      targets:
+        - question_id: CHG-C1
+          value: L
+          confidence: 0.70
+        - question_id: CHG-C3
+          value: L
+          confidence: 0.70
+        - question_id: OPS-C1
+          value: L
+          confidence: 0.75
+      allow_override: true
+    user_message: "Strong ISO 9001 operations detected - pre-populating change control"
+
+  # Strong ISO 9001 Clause 9 indicates good monitoring
+  - id: CFP-006
+    description: "Strong ISO Clause 9 pre-populates monitoring questions"
+    trigger:
+      framework: iso9001
+      clause: "9"
+      score_threshold: 70
+    action:
+      type: pre_populate
+      targets:
+        - question_id: ARC-O2
+          value: L
+          confidence: 0.70
+        - question_id: FBK-C1
+          value: L
+          confidence: 0.70
+      allow_override: true
+    user_message: "Strong ISO 9001 monitoring detected - pre-populating feedback questions"
+
+  # High defect escape rate indicates testing gaps
+  - id: CFP-007
+    description: "High defect escape propagates to test questions"
+    trigger:
+      question_id: FBK-O1
+      operator: less_than
+      value: 50  # Defect containment below 50%
+    action:
+      type: pre_populate
+      targets:
+        - question_id: TST-O3
+          value: "high"
+          confidence: 0.80
+        - question_id: TAM-O4
+          value: 4
+          confidence: 0.60
+      allow_override: true
+    user_message: "High defect escape rate detected - flagging test effectiveness concerns"
+
+# ============================================
+# PROGRESSIVE DISCLOSURE RULES
+# Show operational questions after capability questions
+# ============================================
+progressive_disclosure:
+  # Standard progressive disclosure for all categories
+  - id: PD-001
+    description: "Standard progressive disclosure for all categories"
+    scope: all_categories
+    stages:
+      - stage: 1
+        dimension: capability
+        description: "Assess whether capability exists"
+      - stage: 2
+        dimension: operational
+        condition:
+          stage_1_average_threshold: 30
+        description: "Assess whether capability is being used"
+    skip_stage_2_message: "Capability too low for operational assessment - focus on building basics"
+
+  # Test Assets has special handling
+  - id: PD-002
+    description: "Test Assets progressive disclosure"
+    scope: test_assets
+    stages:
+      - stage: 1
+        questions: [TAM-O1]
+        description: "Determine automation state"
+      - stage: 2
+        questions: [TAM-C1, TAM-C2, TAM-C3]
+        condition:
+          question_id: TAM-O1
+          operator: not_equals
+          value: "none"
+        description: "Assess automation capability"
+      - stage: 3
+        questions: [TAM-O2, TAM-O3, TAM-O4]
+        condition:
+          question_id: TAM-O1
+          operator: in
+          value: ["established", "struggling", "failing"]
+        description: "Assess automation health"
+
+  # Governance has authority dependencies
+  - id: PD-003
+    description: "Governance progressive disclosure"
+    scope: governance
+    stages:
+      - stage: 1
+        questions: [GOV-C1]
+        description: "Determine test leadership"
+      - stage: 2
+        questions: [GOV-C2, GOV-C3]
+        condition:
+          question_id: GOV-C1
+          operator: equals
+          value: true
+        description: "Assess test lead authority"
+      - stage: 3
+        questions: [GOV-O1, GOV-O2, GOV-O3]
+        condition:
+          question_id: GOV-C2
+          operator: not_equals
+          value: "no"
+        description: "Assess governance effectiveness"
+
+  # Third Party has supplier dependencies
+  - id: PD-004
+    description: "Third Party progressive disclosure"
+    scope: third_party
+    stages:
+      - stage: 1
+        questions: [TPT-O1]
+        description: "Determine supplier count"
+      - stage: 2
+        questions: [TPT-C1, TPT-C2]
+        condition:
+          question_id: TPT-O1
+          operator: greater_than
+          value: 0
+        description: "Assess supplier management"
+      - stage: 3
+        questions: [TPT-C3, TPT-C4, TPT-O2, TPT-O3, TPT-O4]
+        condition:
+          question_id: TPT-O1
+          operator: greater_than
+          value: 2
+        description: "Deep supplier assessment"
+
+# ============================================
+# QUESTION METADATA
+# Maps questions to dimensions and categories
+# ============================================
+question_metadata:
+  # Governance category
+  GOV-C1: { category: governance, dimension: capability, priority: high }
+  GOV-C2: { category: governance, dimension: capability, priority: high }
+  GOV-C3: { category: governance, dimension: capability, priority: medium }
+  GOV-C4: { category: governance, dimension: capability, priority: medium }
+  GOV-O1: { category: governance, dimension: operational, priority: medium }
+  GOV-O2: { category: governance, dimension: operational, priority: medium }
+  GOV-O3: { category: governance, dimension: operational, priority: high }
+  GOV-O4: { category: governance, dimension: capability, priority: low }
+  GOV-O5: { category: governance, dimension: capability, priority: low }
+  # GOV-O6 RETIRED: duplicate of TST-O4
+
+  # Test Strategy category
+  TST-C1: { category: test_strategy, dimension: capability, priority: high }
+  TST-C2: { category: test_strategy, dimension: capability, priority: high }
+  TST-C3: { category: test_strategy, dimension: capability, priority: high }
+  TST-C4: { category: test_strategy, dimension: capability, priority: medium }
+  TST-O1: { category: test_strategy, dimension: operational, priority: medium }
+  TST-O2: { category: test_strategy, dimension: operational, priority: high }
+  TST-O3: { category: test_strategy, dimension: operational, priority: high }
+  TST-O4: { category: test_strategy, dimension: capability, priority: medium }
+  TST-O5: { category: test_strategy, dimension: operational, priority: medium }
+
+  # Test Assets category
+  TAM-C1: { category: test_assets, dimension: capability, priority: high }
+  TAM-C2: { category: test_assets, dimension: capability, priority: medium }
+  TAM-C3: { category: test_assets, dimension: capability, priority: medium }
+  TAM-O1: { category: test_assets, dimension: operational, priority: high }
+  TAM-O2: { category: test_assets, dimension: operational, priority: high }
+  TAM-O3: { category: test_assets, dimension: operational, priority: medium }
+  TAM-O4: { category: test_assets, dimension: operational, priority: high }
+
+  # Development category
+  DEV-C1: { category: development, dimension: capability, priority: high }
+  DEV-C2: { category: development, dimension: capability, priority: high }
+  DEV-C3: { category: development, dimension: capability, priority: medium }
+  DEV-C4: { category: development, dimension: capability, priority: medium }
+  DEV-O1: { category: development, dimension: operational, priority: medium }
+  DEV-O2: { category: development, dimension: operational, priority: medium }
+  DEV-O3: { category: development, dimension: operational, priority: high }
+
+  # Environment category
+  ENV-C1: { category: environment, dimension: capability, priority: medium }
+  ENV-C2: { category: environment, dimension: capability, priority: high }
+  ENV-C3: { category: environment, dimension: capability, priority: medium }
+  ENV-O1: { category: environment, dimension: operational, priority: high }
+  ENV-O2: { category: environment, dimension: operational, priority: high }
+  ENV-O3: { category: environment, dimension: capability, priority: high }
+  ENV-O4: { category: environment, dimension: operational, priority: medium }
+  ENV-O5: { category: environment, dimension: operational, priority: medium }
+
+  # Requirements category
+  REQ-C1: { category: requirements, dimension: capability, priority: high }
+  REQ-C2: { category: requirements, dimension: capability, priority: high }
+  REQ-C3: { category: requirements, dimension: capability, priority: high }
+  REQ-O1: { category: requirements, dimension: operational, priority: medium }
+  REQ-O2: { category: requirements, dimension: operational, priority: medium }
+
+  # Change Management category
+  CHG-C1: { category: change_management, dimension: capability, priority: high }
+  CHG-C2: { category: change_management, dimension: capability, priority: high }
+  CHG-C3: { category: change_management, dimension: capability, priority: high }
+  CHG-O1: { category: change_management, dimension: operational, priority: medium }
+  CHG-O2: { category: change_management, dimension: operational, priority: medium }
+
+  # Feedback category
+  FBK-C1: { category: feedback, dimension: capability, priority: high }
+  # FBK-C2 RETIRED: duplicate of TST-O4
+  FBK-O1: { category: feedback, dimension: operational, priority: high }
+  FBK-O2: { category: feedback, dimension: operational, priority: medium }
+
+  # Architecture category
+  ARC-C1: { category: architecture, dimension: capability, priority: medium }
+  ARC-C2: { category: architecture, dimension: capability, priority: high }
+  ARC-C3: { category: architecture, dimension: capability, priority: medium }
+  ARC-C4: { category: architecture, dimension: capability, priority: medium }
+  ARC-C5: { category: architecture, dimension: capability, priority: medium }
+  ARC-C5a: { category: architecture, dimension: capability, priority: low, conditional: true }
+  ARC-C5b: { category: architecture, dimension: capability, priority: low, conditional: true }
+  ARC-C5c: { category: architecture, dimension: capability, priority: low, conditional: true }
+  ARC-O1: { category: architecture, dimension: operational, priority: medium }
+  ARC-O2: { category: architecture, dimension: capability, priority: high }
+
+  # Ops Readiness category
+  OPS-C1: { category: ops_readiness, dimension: capability, priority: high }
+  OPS-C2: { category: ops_readiness, dimension: capability, priority: medium }
+  OPS-C3: { category: ops_readiness, dimension: capability, priority: medium }
+  OPS-O1: { category: ops_readiness, dimension: capability, priority: high }
+  OPS-O2: { category: ops_readiness, dimension: operational, priority: medium }
+
+  # Third Party category
+  TPT-C1: { category: third_party, dimension: capability, priority: high }
+  TPT-C2: { category: third_party, dimension: capability, priority: high }
+  TPT-C3: { category: third_party, dimension: capability, priority: medium }
+  TPT-C4: { category: third_party, dimension: capability, priority: medium }
+  TPT-O1: { category: third_party, dimension: operational, priority: high }
+  TPT-O2: { category: third_party, dimension: operational, priority: medium }
+  TPT-O3: { category: third_party, dimension: operational, priority: medium }
+  TPT-O4: { category: third_party, dimension: operational, priority: medium }
+
+  # ---- Branch Questions (second-level chaining) ----
+
+  # Life-Safety Regulatory branch
+  RC-LS-01: { category: life_safety, dimension: capability, priority: high, conditional: true, branch: life_safety_regulatory }
+  RC-LS-02: { category: life_safety, dimension: capability, priority: high, conditional: true, branch: life_safety_regulatory }
+  RC-LS-03: { category: life_safety, dimension: capability, priority: high, conditional: true, branch: life_safety_regulatory }
+  RC-LS-04: { category: life_safety, dimension: capability, priority: high, conditional: true, branch: life_safety_regulatory }
+  RC-LS-05: { category: life_safety, dimension: capability, priority: high, conditional: true, branch: life_safety_regulatory }
+
+  # Automotive Regulatory branch
+  RC-AUTO-01: { category: automotive_safety, dimension: capability, priority: high, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-02: { category: automotive_safety, dimension: capability, priority: high, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-03: { category: automotive_safety, dimension: capability, priority: high, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-04: { category: automotive_safety, dimension: operational, priority: high, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-05: { category: automotive_safety, dimension: capability, priority: high, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-06: { category: automotive_safety, dimension: capability, priority: high, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-07: { category: automotive_safety, dimension: capability, priority: medium, conditional: true, branch: automotive_regulatory }
+  RC-AUTO-08: { category: automotive_safety, dimension: capability, priority: medium, conditional: true, branch: automotive_regulatory }
+
+  # Automation Diagnostics branch
+  TAM-DX-01: { category: test_assets, dimension: operational, priority: high, conditional: true, branch: automation_diagnostics }
+  TAM-DX-02: { category: test_assets, dimension: operational, priority: medium, conditional: true, branch: automation_diagnostics }
+  TAM-DX-03: { category: test_assets, dimension: operational, priority: medium, conditional: true, branch: automation_diagnostics }
+  TAM-DX-04: { category: test_assets, dimension: operational, priority: medium, conditional: true, branch: automation_diagnostics }
+  TAM-DX-05: { category: test_assets, dimension: operational, priority: high, conditional: true, branch: automation_diagnostics }
+  TAM-DX-06: { category: test_assets, dimension: operational, priority: medium, conditional: true, branch: automation_diagnostics }
+
+  # Enterprise Scale Operations branch
+  SC-ENT-01: { category: enterprise_scale, dimension: operational, priority: high, conditional: true, branch: enterprise_scale_ops }
+  SC-ENT-02: { category: enterprise_scale, dimension: capability, priority: high, conditional: true, branch: enterprise_scale_ops }
+  SC-ENT-03: { category: enterprise_scale, dimension: capability, priority: high, conditional: true, branch: enterprise_scale_ops }
+  SC-ENT-04: { category: enterprise_scale, dimension: operational, priority: medium, conditional: true, branch: enterprise_scale_ops }
+  SC-ENT-05: { category: enterprise_scale, dimension: capability, priority: medium, conditional: true, branch: enterprise_scale_ops }
+
+  # Legacy System Complexity branch
+  ARC-LG-01: { category: architecture, dimension: capability, priority: high, conditional: true, branch: legacy_complexity }
+  ARC-LG-02: { category: architecture, dimension: capability, priority: medium, conditional: true, branch: legacy_complexity }
+  ARC-LG-03: { category: architecture, dimension: capability, priority: high, conditional: true, branch: legacy_complexity }
+  ARC-LG-04: { category: architecture, dimension: capability, priority: medium, conditional: true, branch: legacy_complexity }
+
+  # Supplier Quality Deep-Dive branch
+  TPT-SQ-01: { category: third_party, dimension: operational, priority: high, conditional: true, branch: supplier_quality }
+  TPT-SQ-02: { category: third_party, dimension: operational, priority: high, conditional: true, branch: supplier_quality }
+  TPT-SQ-03: { category: third_party, dimension: operational, priority: medium, conditional: true, branch: supplier_quality }
+  TPT-SQ-04: { category: third_party, dimension: operational, priority: medium, conditional: true, branch: supplier_quality }
+
+  # Governance Authority Gap branch
+  GOV-AG-01: { category: governance, dimension: capability, priority: high, conditional: true, branch: governance_authority_gap }
+  GOV-AG-02: { category: governance, dimension: operational, priority: high, conditional: true, branch: governance_authority_gap }
+  GOV-AG-03: { category: governance, dimension: capability, priority: medium, conditional: true, branch: governance_authority_gap }
+
+  # ---- Defect Management category (HOLISTIC QUESTIONS) ----
+  # PROPOSED-DFM-01: Replaces DFM-C1 through DFM-C6 (process maturity)
+  PROPOSED-DFM-01: { category: defect_management, dimension: capability, priority: high }
+  # PROPOSED-DFM-02: Replaces DFM-O1 through DFM-O4 (defect counts by severity)
+  PROPOSED-DFM-02: { category: defect_management, dimension: operational, priority: high, conditional: true }
+  # PROPOSED-DFM-03: Replaces DFT-C1/C2/C3/O1/O2 (release targets and status)
+  PROPOSED-DFM-03: { category: defect_management, dimension: capability, priority: high, conditional: true }
+  # PROPOSED-DFM-04: Replaces DFL-O1 through DFL-O4 (phase leakage)
+  PROPOSED-DFM-04: { category: defect_management, dimension: operational, priority: high, conditional: true }
+  # PROPOSED-DFM-05: Replaces DFM-O5 through DFM-O8 (trend and cycle times)
+  PROPOSED-DFM-05: { category: defect_management, dimension: operational, priority: medium, conditional: true }
+
+  # ---- Base Test Phase Progress questions ----
+  TPP-C1: { category: test_phase_progress, dimension: capability, priority: high }
+  TPP-C2: { category: test_phase_progress, dimension: capability, priority: medium }
+  TPP-C3: { category: test_phase_progress, dimension: capability, priority: high }
+  TPP-O1: { category: test_phase_progress, dimension: capability, priority: high }
+  # PROPOSED-TPP-PHASE: Replaces TPP-O2-O7, TPP-EP1-6, TPP-BL1-6, TPP-EC2-6, TPP-ST1-6 (29 questions)
+  # This is an adaptive phase matrix that shows fields only for active phases from TPP-O1
+  PROPOSED-TPP-PHASE: { category: test_phase_progress, dimension: operational, priority: high, conditional: true }
+  TPP-O8: { category: test_phase_progress, dimension: operational, priority: high }
+  TPP-O9: { category: test_phase_progress, dimension: operational, priority: medium }
+  # Phase-specific lifecycle confidence questions (conditional on TPP-O1)
+  TPP-O10: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  TPP-O11: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  TPP-O12: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  TPP-O13: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  TPP-O14: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  # Entry Criteria definition (base question)
+  TPP-EC1: { category: test_phase_progress, dimension: capability, priority: high }
+  # Test Cycles (conditional on TPP-O1 containing system/uat)
+  TPP-CY1: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  TPP-CY2: { category: test_phase_progress, dimension: capability, priority: medium, conditional: true }
+  TPP-CY3: { category: test_phase_progress, dimension: operational, priority: medium, conditional: true }
+  TPP-CY4: { category: test_phase_progress, dimension: capability, priority: medium, conditional: true }
+
+  # ---- Timeline / Context questions (non-scoring) ----
+  # TL-01/TL-02 removed - dates collected in Timeline & Phases page
+  TL-03: { category: project_timeline, dimension: context, priority: medium, scoring: false }
+
+# ============================================
+# CATEGORY CONFIGURATION
+# ============================================
+categories:
+  governance:
+    name: "Governance"
+    description: "Test leadership, authority, and oversight"
+    capability_questions: [GOV-C1, GOV-C2, GOV-C3, GOV-C4]
+    operational_questions: [GOV-O1, GOV-O2, GOV-O3, GOV-O4, GOV-O5]
+    branch_questions: [GOV-AG-01, GOV-AG-02, GOV-AG-03]
+
+  test_strategy:
+    name: "Test Strategy"
+    description: "Test approach, coverage, and design"
+    capability_questions: [TST-C1, TST-C2, TST-C3, TST-C4]
+    operational_questions: [TST-O1, TST-O2, TST-O3, TST-O4, TST-O5]
+
+  test_assets:
+    name: "Test Assets"
+    description: "Test automation and asset management"
+    capability_questions: [TAM-C1, TAM-C2, TAM-C3]
+    operational_questions: [TAM-O1, TAM-O2, TAM-O3, TAM-O4]
+    branch_questions: [TAM-DX-01, TAM-DX-02, TAM-DX-03, TAM-DX-04, TAM-DX-05, TAM-DX-06]
+
+  development:
+    name: "Development Practices"
+    description: "Code quality, reviews, and build practices"
+    capability_questions: [DEV-C1, DEV-C2, DEV-C3, DEV-C4]
+    operational_questions: [DEV-O1, DEV-O2, DEV-O3]
+
+  environment:
+    name: "Environment"
+    description: "Test environments, CI/CD, and infrastructure"
+    capability_questions: [ENV-C1, ENV-C2, ENV-C3]
+    operational_questions: [ENV-O1, ENV-O2, ENV-O3, ENV-O4, ENV-O5]
+
+  requirements:
+    name: "Requirements"
+    description: "Requirements quality and traceability"
+    capability_questions: [REQ-C1, REQ-C2, REQ-C3]
+    operational_questions: [REQ-O1, REQ-O2]
+
+  change_management:
+    name: "Change Management"
+    description: "Change control and release management"
+    capability_questions: [CHG-C1, CHG-C2, CHG-C3]
+    operational_questions: [CHG-O1, CHG-O2]
+
+  feedback:
+    name: "Feedback & Metrics"
+    description: "Defect tracking and quality metrics"
+    capability_questions: [FBK-C1]
+    operational_questions: [FBK-O1, FBK-O2]
+
+  defect_management:
+    name: "Defect Management"
+    description: "Defect triage, tracking, phase leakage, and release targets"
+    # PROPOSED-DFM-01: Holistic maturity question (always visible)
+    capability_questions: [PROPOSED-DFM-01]
+    # No ungated operational questions
+    operational_questions: []
+    # Gated by PROPOSED-DFM-01 value:
+    # - PROPOSED-DFM-02: gated by PROPOSED-DFM-01 != 'none' (CD-DFM-GATE-NONE)
+    # - PROPOSED-DFM-03: gated by PROPOSED-DFM-01 in [defined, formal, optimised] (CD-DFM-GATE-INFORMAL)
+    # - PROPOSED-DFM-04: gated by PROPOSED-DFM-01 in [defined, formal, optimised] (CD-DFM-GATE-INFORMAL)
+    # - PROPOSED-DFM-05: gated by PROPOSED-DFM-01 != 'none' (CD-DFM-GATE-NONE)
+    conditional_questions: [PROPOSED-DFM-02, PROPOSED-DFM-03, PROPOSED-DFM-04, PROPOSED-DFM-05]
+
+  architecture:
+    name: "Architecture"
+    description: "System architecture and testability"
+    capability_questions: [ARC-C1, ARC-C2, ARC-C3, ARC-C4, ARC-C5]
+    operational_questions: [ARC-O1, ARC-O2]
+    conditional_questions: [ARC-C5a, ARC-C5b, ARC-C5c]
+    branch_questions: [ARC-LG-01, ARC-LG-02, ARC-LG-03, ARC-LG-04]
+
+  ops_readiness:
+    name: "Ops Readiness"
+    description: "Operational readiness and support"
+    capability_questions: [OPS-C1, OPS-C2, OPS-C3]
+    operational_questions: [OPS-O1, OPS-O2]
+
+  third_party:
+    name: "Third Party"
+    description: "Vendor and supplier management"
+    capability_questions: [TPT-C1, TPT-C2, TPT-C3, TPT-C4]
+    operational_questions: [TPT-O1, TPT-O2, TPT-O3, TPT-O4]
+    branch_questions: [TPT-SQ-01, TPT-SQ-02, TPT-SQ-03, TPT-SQ-04]
+
+  # Branch-only categories (no base questions, only appear when branch activates)
+  life_safety:
+    name: "Life-Safety Compliance"
+    description: "FDA, HIPAA, and medical device regulatory compliance"
+    capability_questions: []
+    operational_questions: []
+    branch_questions: [RC-LS-01, RC-LS-02, RC-LS-03, RC-LS-04, RC-LS-05]
+    branch_only: true
+
+  automotive_safety:
+    name: "Automotive Safety & Compliance"
+    description: "ISO 26262 functional safety, ASPICE process maturity, cybersecurity (ISO 21434), and supply chain"
+    capability_questions: []
+    operational_questions: []
+    branch_questions: [RC-AUTO-01, RC-AUTO-02, RC-AUTO-03, RC-AUTO-04, RC-AUTO-05, RC-AUTO-06, RC-AUTO-07, RC-AUTO-08]
+    branch_only: true
+
+  enterprise_scale:
+    name: "Enterprise Scale Operations"
+    description: "Multi-region deployment, data residency, and global coordination"
+    capability_questions: []
+    operational_questions: []
+    branch_questions: [SC-ENT-01, SC-ENT-02, SC-ENT-03, SC-ENT-04, SC-ENT-05]
+    branch_only: true
+
+  test_phase_progress:
+    name: "Test Phase Progress"
+    description: "Active test phases, pass rates, blockers, and execution tracking"
+    # Base questions (always visible)
+    capability_questions: [TPP-O1, TPP-C1, TPP-C2, TPP-C3, TPP-EC1]
+    # PROPOSED-TPP-PHASE replaces 29 individual phase questions
+    operational_questions: [TPP-O8, TPP-O9]
+    # Conditional questions (dependent on TPP-O1 active phases)
+    # - PROPOSED-TPP-PHASE: adaptive matrix shown when TPP-O1 not empty
+    # - TPP-O10-O14: lifecycle confidence questions gated by TPP-O1 values
+    # - TPP-CY1-CY4: cycle counts gated by system/uat phases
+    conditional_questions: [PROPOSED-TPP-PHASE, TPP-O10, TPP-O11, TPP-O12, TPP-O13, TPP-O14, TPP-CY1, TPP-CY2, TPP-CY3, TPP-CY4]

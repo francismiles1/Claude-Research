@@ -1,0 +1,2118 @@
+# Cross-Framework Capability Mapping
+# Maps equivalent capabilities across TMMi, DORA, ISO 9001, and Project Risk frameworks
+# Version: 1.0
+
+version: "1.0"
+description: "Maps equivalent capabilities across all assessment frameworks for unified scoring"
+
+# ============================================
+# CAPABILITY MAPPINGS
+# Each capability represents a common concept assessed differently by each framework
+# ============================================
+
+capabilities:
+  # ============================================
+  # 1. TEST POLICY & STRATEGY
+  # ============================================
+  - id: test_policy_strategy
+    name: "Test Policy & Strategy"
+    description: "Organisational test policy and strategic test approach definition"
+    category: governance
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.1-SP1.1
+          practice_name: "Define Test Goals"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.1-SP1.2
+          practice_name: "Define Test Policy"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.1-SP2.2
+          practice_name: "Define Test Strategy"
+          maturity_level: 2
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-036
+          practice_name: "Define test strategy aligned to risk"
+          maturity_level: 3
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L2-PA-5
+          clause: "5.2"
+          practice_code: SP018
+          practice_name: "Define and publish software quality policy"
+          weight: 0.8
+        - pa_code: L2-PA-6
+          clause: "6.2"
+          practice_code: SP031
+          practice_name: "Define project quality objectives"
+          weight: 0.7
+
+      project_risk:
+        - question_id: TST-C1
+          question_text: "Is there a documented test strategy?"
+          dimension: capability
+          weight: 1.0
+
+    primary_source: tmmi.PA2.1-SP1.2
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 2. RISK-BASED TESTING
+  # ============================================
+  - id: risk_based_testing
+    name: "Risk-Based Test Approach"
+    description: "Test prioritisation driven by business and technical risk"
+    category: test_strategy
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.2-SP1.1
+          practice_name: "Define Product Risk Categories"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.2-SP1.2
+          practice_name: "Identify Product Risks"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.2-SP2.2
+          practice_name: "Define Test Approach"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.1-SP2.1
+          practice_name: "Perform Generic Product Risk Assessment"
+          maturity_level: 2
+          weight: 0.8
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-036
+          practice_name: "Define test strategy aligned to risk"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-016
+          practice_code: SP-080
+          practice_name: "Performance testing per risk"
+          maturity_level: 4
+          weight: 0.7
+
+      iso9001:
+        - pa_code: L2-PA-6
+          clause: "6.1"
+          practice_code: SP022
+          practice_name: "Maintain software delivery risk register"
+          weight: 0.9
+        - pa_code: L3-PA-6
+          clause: "6.1"
+          practice_code: SP023
+          practice_name: "Define risk treatment actions"
+          weight: 0.8
+
+      project_risk:
+        - question_id: TST-C2
+          question_text: "Is the test approach risk-based?"
+          dimension: capability
+          weight: 1.0
+        - question_id: TST-O3
+          question_text: "Defect escape rate to production"
+          dimension: operational
+          weight: 0.8
+
+    primary_source: tmmi.PA2.2-SP1.2
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 3. TEST PLANNING & ESTIMATION
+  # ============================================
+  - id: test_planning
+    name: "Test Planning & Estimation"
+    description: "Systematic test planning with effort estimation and scheduling"
+    category: test_strategy
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.2-SP3.1
+          practice_name: "Establish top-level WBS"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.2-SP3.2
+          practice_name: "Define Test Lifecycle"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.2-SP3.3
+          practice_name: "Determine estimates for test effort"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.2-SP4.1
+          practice_name: "Establish test schedule"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.2-SP4.5
+          practice_name: "Establish the test plan"
+          maturity_level: 2
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-037
+          practice_name: "Healthy test pyramid established"
+          maturity_level: 3
+          weight: 0.7
+
+      iso9001:
+        - pa_code: L3-PA-8.1
+          clause: "8.1"
+          practice_code: SP056
+          practice_name: "Plan verification/validation early"
+          weight: 0.9
+        - pa_code: L3-PA-6
+          clause: "6.2"
+          practice_code: SP033
+          practice_name: "Plan capacity for key milestones"
+          weight: 0.8
+
+      project_risk:
+        - question_id: TST-C4
+          question_text: "Is there a test plan for this project?"
+          dimension: capability
+          weight: 1.0
+        - question_id: TST-O5
+          question_text: "Test execution aligned with release cycles"
+          dimension: operational
+          weight: 0.8
+
+    primary_source: tmmi.PA2.2-SP4.5
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 4. TEST MONITORING & CONTROL
+  # ============================================
+  - id: test_monitoring
+    name: "Test Monitoring & Control"
+    description: "Tracking test progress and taking corrective action"
+    category: governance
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.3-SP1.5
+          practice_name: "Conduct Test Progress Reviews"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.1-SP3.1
+          practice_name: "Define Test Performance Indicators"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.1-SP3.2
+          practice_name: "Deploy Test Performance Indicators"
+          maturity_level: 2
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-001
+          practice_code: SP-001
+          practice_name: "Define metric definitions"
+          maturity_level: 2
+          weight: 0.8
+        - pa_code: PA-004
+          practice_code: SP-012
+          practice_name: "Define metric ownership and review cadence"
+          maturity_level: 3
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L3-PA-9-10
+          clause: "9.1"
+          practice_code: SP133
+          practice_name: "Define measurement objectives and KPI catalogue"
+          weight: 0.9
+        - pa_code: L4-PA-9-10
+          clause: "9.1"
+          practice_code: SP134
+          practice_name: "Define metric ownership/cadence/thresholds"
+          weight: 0.8
+
+      project_risk:
+        - question_id: GOV-O1
+          question_text: "Test progress visibility"
+          dimension: operational
+          weight: 1.0
+
+    primary_source: tmmi.PA2.3-SP1.5
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 5. DEFECT MANAGEMENT
+  # ============================================
+  - id: defect_management
+    name: "Defect Tracking & Management"
+    description: "Systematic capture, tracking, and resolution of defects"
+    category: feedback
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.4-SP4.1
+          practice_name: "Log Test Incidents"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.4-SP4.2
+          practice_name: "Classify Test Incidents"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.4-SP4.3
+          practice_name: "Track Test Incidents to Closure"
+          maturity_level: 2
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-004
+          practice_code: SP-015
+          practice_name: "Feedback production issues into delivery backlog"
+          maturity_level: 3
+          weight: 0.9
+        - pa_code: PA-017
+          practice_code: SP-092
+          practice_name: "Problem backlog for systemic issues"
+          maturity_level: 4
+          weight: 0.7
+
+      iso9001:
+        - pa_code: L2-PA-8.5-8.7
+          clause: "8.7"
+          practice_code: SP128
+          practice_name: "Defects/nonconformities logged and controlled"
+          weight: 1.0
+        - pa_code: L2-PA-8.5-8.7
+          clause: "8.7"
+          practice_code: SP130
+          practice_name: "Fix verification before closure"
+          weight: 0.9
+
+      project_risk:
+        - question_id: FBK-O1
+          question_text: "Defect containment ratio"
+          dimension: operational
+          weight: 1.0
+        - question_id: FBK-C1
+          question_text: "Is there a defect management process?"
+          dimension: capability
+          weight: 0.9
+        - question_id: PROPOSED-DFM-01
+          question_text: "Defect management process maturity"
+          dimension: capability
+          weight: 0.9
+        - question_id: DFM-C-TARGETS
+          question_text: "Are release defect targets formally defined?"
+          dimension: capability
+          weight: 0.8
+
+    primary_source: iso9001.SP128
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 6. TEST ENVIRONMENT MANAGEMENT
+  # ============================================
+  - id: test_environment
+    name: "Test Environment Management"
+    description: "Provisioning, configuration, and control of test environments"
+    category: environment
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.5-SP1.1
+          practice_name: "Identify Test Environment Requirements"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.5-SP2.1
+          practice_name: "Acquire Test Environment"
+          maturity_level: 2
+          weight: 0.8
+        - practice_code: PA2.5-SP3.1
+          practice_name: "Manage Test Environment Configuration"
+          maturity_level: 2
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-006
+          practice_code: SP-025
+          practice_name: "Infrastructure as Code for environments"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-006
+          practice_code: SP-030
+          practice_name: "Environment parity policy"
+          maturity_level: 3
+          weight: 0.9
+        - pa_code: PA-008
+          practice_code: SP-040
+          practice_name: "Environment stability for test reliability"
+          maturity_level: 3
+          weight: 0.8
+
+      iso9001:
+        - pa_code: L3-PA-7
+          clause: "7.1"
+          practice_code: SP046
+          practice_name: "Environment segregation"
+          weight: 0.9
+        - pa_code: L3-PA-7
+          clause: "7.1"
+          practice_code: SP047
+          practice_name: "Control test environment config and refresh"
+          weight: 1.0
+
+      project_risk:
+        - question_id: ENV-O1
+          question_text: "Environment quality and stability"
+          dimension: operational
+          weight: 1.0
+        - question_id: ENV-O2
+          question_text: "Environment parity (dev/test/prod similarity)"
+          dimension: operational
+          weight: 0.9
+        - question_id: ENV-C1
+          question_text: "Is there a test data strategy?"
+          dimension: capability
+          weight: 0.8
+        - question_id: ENV-C2
+          question_text: "Configuration management approach"
+          dimension: capability
+          weight: 0.8
+        - question_id: ENV-O5
+          question_text: "Test data management and refresh quality"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: project_risk.ENV-O1
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 7. TEST AUTOMATION
+  # ============================================
+  - id: test_automation
+    name: "Test Automation Strategy & Implementation"
+    description: "Systematic approach to test automation"
+    category: test_assets
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.3-SP2.1
+          practice_name: "Define Test Automation Strategy"
+          maturity_level: 3
+          weight: 1.0
+        - practice_code: PA3.3-SP2.2
+          practice_name: "Implement Test Automation"
+          maturity_level: 3
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-002
+          practice_code: SP-006
+          practice_name: "Run automated unit tests in CI"
+          maturity_level: 2
+          weight: 0.9
+        - pa_code: PA-008
+          practice_code: SP-038
+          practice_name: "Automate integration tests in pipeline"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-016
+          practice_code: SP-079
+          practice_name: "Automate end-to-end tests selectively"
+          maturity_level: 4
+          weight: 0.7
+
+      iso9001:
+        - pa_code: L4-PA-8.3
+          clause: "8.3.5"
+          practice_code: SP082
+          practice_name: "Automated quality gates in CI/CD"
+          weight: 0.9
+
+      project_risk:
+        - question_id: TST-C3
+          question_text: "Is there a documented automation strategy?"
+          dimension: capability
+          weight: 1.0
+        - question_id: TAM-O1
+          question_text: "Current automation state"
+          dimension: operational
+          weight: 0.9
+        - question_id: TAM-O2
+          question_text: "Automation flakiness rate"
+          dimension: operational
+          weight: 0.8
+        - question_id: TAM-C1
+          question_text: "Is there a test suite health monitoring process?"
+          dimension: capability
+          weight: 0.7
+        - question_id: TAM-C2
+          question_text: "Is there a test retirement/pruning process?"
+          dimension: capability
+          weight: 0.6
+        - question_id: TAM-C3
+          question_text: "Is automation ROI measured or understood?"
+          dimension: capability
+          weight: 0.7
+        - question_id: TAM-O3
+          question_text: "Maintenance vs new coverage effort ratio"
+          dimension: operational
+          weight: 0.8
+        - question_id: TAM-O4
+          question_text: "Team trust in automation results"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: project_risk.TST-C3
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 8. CODE REVIEW PROCESS
+  # ============================================
+  - id: code_review
+    name: "Code Review Process"
+    description: "Systematic review of code changes before merge"
+    category: development
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.5-SP1.1
+          practice_name: "Establish Peer Review Approach"
+          maturity_level: 3
+          weight: 1.0
+        - practice_code: PA3.5-SP2.1
+          practice_name: "Prepare for Peer Reviews"
+          maturity_level: 3
+          weight: 0.8
+        - practice_code: PA3.5-SP2.2
+          practice_name: "Conduct Peer Reviews"
+          maturity_level: 3
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-005
+          practice_code: SP-018
+          practice_name: "Require code review for changes"
+          maturity_level: 3
+          weight: 1.0
+
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.4"
+          practice_code: SP088
+          practice_name: "Peer review required for code changes"
+          weight: 1.0
+        - pa_code: L3-PA-7
+          clause: "7.5"
+          practice_code: SP043
+          practice_name: "Coding standards and review expectations"
+          weight: 0.8
+
+      project_risk:
+        - question_id: DEV-C2
+          question_text: "Is there a mandatory code review process?"
+          dimension: capability
+          weight: 1.0
+        - question_id: DEV-O1
+          question_text: "Code review coverage percentage"
+          dimension: operational
+          weight: 0.9
+
+    primary_source: dora.SP-018
+    propagation_confidence: 0.90
+
+  # ============================================
+  # 8b. CODING STANDARDS
+  # ============================================
+  - id: coding_standards
+    name: "Coding Standards"
+    description: "Defined and enforced coding standards across the team"
+    category: development
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.5-SP1.1
+          practice_name: "Establish Peer Review Approach"
+          maturity_level: 3
+          weight: 0.7
+      dora:
+        - pa_code: PA-005
+          practice_code: SP-019
+          practice_name: "Enforce coding standards in CI"
+          maturity_level: 3
+          weight: 0.8
+      iso9001:
+        - pa_code: L3-PA-7
+          clause: "7.5"
+          practice_code: SP043
+          practice_name: "Coding standards and review expectations"
+          weight: 1.0
+      project_risk:
+        - question_id: DEV-C1
+          question_text: "Are coding standards defined and enforced?"
+          dimension: capability
+          weight: 1.0
+
+    primary_source: iso9001.SP043
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 8c. UNIT TESTING
+  # ============================================
+  - id: unit_testing
+    name: "Unit Testing Practice"
+    description: "Defined unit testing expectations and coverage"
+    category: development
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.3-SP1.1
+          practice_name: "Define Test Approach per Level"
+          maturity_level: 3
+          weight: 0.8
+      dora:
+        - pa_code: PA-002
+          practice_code: SP-006
+          practice_name: "Run automated unit tests in CI"
+          maturity_level: 2
+          weight: 1.0
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.4"
+          practice_code: SP085
+          practice_name: "Unit verification before integration"
+          weight: 0.9
+      project_risk:
+        - question_id: DEV-C3
+          question_text: "Are unit testing expectations defined?"
+          dimension: capability
+          weight: 1.0
+        - question_id: DEV-O2
+          question_text: "Unit test coverage percentage"
+          dimension: operational
+          weight: 0.9
+
+    primary_source: dora.SP-006
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 8d. STATIC ANALYSIS
+  # ============================================
+  - id: static_analysis
+    name: "Static Analysis"
+    description: "Integration of static analysis tools in the development pipeline"
+    category: development
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.5-SP2.2
+          practice_name: "Conduct Peer Reviews"
+          maturity_level: 3
+          weight: 0.6
+      dora:
+        - pa_code: PA-005
+          practice_code: SP-020
+          practice_name: "Automated code quality checks"
+          maturity_level: 3
+          weight: 0.9
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.4"
+          practice_code: SP089
+          practice_name: "Automated verification of design outputs"
+          weight: 0.8
+      project_risk:
+        - question_id: DEV-C4
+          question_text: "Is static analysis integrated in the pipeline?"
+          dimension: capability
+          weight: 1.0
+
+    primary_source: dora.SP-020
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 8e. BUILD AUTOMATION
+  # ============================================
+  - id: build_automation
+    name: "Build Automation & Success"
+    description: "Automated build processes and build reliability"
+    category: development
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.3-SP2.1
+          practice_name: "Define Test Automation Strategy"
+          maturity_level: 3
+          weight: 0.6
+      dora:
+        - pa_code: PA-002
+          practice_code: SP-005
+          practice_name: "Automate build process"
+          maturity_level: 2
+          weight: 1.0
+      iso9001:
+        - pa_code: L4-PA-8.3
+          clause: "8.3.5"
+          practice_code: SP082
+          practice_name: "Automated quality gates in CI/CD"
+          weight: 0.8
+      project_risk:
+        - question_id: DEV-O3
+          question_text: "Build success rate"
+          dimension: operational
+          weight: 1.0
+
+    primary_source: dora.SP-005
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 9. CI/CD PIPELINE
+  # ============================================
+  - id: cicd_pipeline
+    name: "CI/CD Pipeline Maturity"
+    description: "Continuous integration and deployment automation"
+    category: environment
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.3-SP2.3
+          practice_name: "Integrate Test Process with CI/CD"
+          maturity_level: 3
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-002
+          practice_code: SP-005
+          practice_name: "Use version control for all code and config"
+          maturity_level: 2
+          weight: 0.9
+        - pa_code: PA-002
+          practice_code: SP-007
+          practice_name: "Automate creation of deployable artefacts"
+          maturity_level: 2
+          weight: 1.0
+        - pa_code: PA-002
+          practice_code: SP-008
+          practice_name: "Automated build on every change"
+          maturity_level: 2
+          weight: 1.0
+        - pa_code: PA-003
+          practice_code: SP-009
+          practice_name: "Automate deployments to non-prod"
+          maturity_level: 2
+          weight: 0.9
+        - pa_code: PA-006
+          practice_code: SP-024
+          practice_name: "Automate deployments to production"
+          maturity_level: 3
+          weight: 1.0
+
+      iso9001:
+        - pa_code: L3-PA-7
+          clause: "7.1"
+          practice_code: SP044
+          practice_name: "Control CI/CD pipelines"
+          weight: 1.0
+
+      project_risk:
+        - question_id: ENV-O3
+          question_text: "CI/CD maturity level"
+          dimension: capability
+          weight: 1.0
+        - question_id: DEV-O3
+          question_text: "Build success rate"
+          dimension: operational
+          weight: 0.8
+
+    primary_source: dora.SP-024
+    propagation_confidence: 0.90
+
+  # ============================================
+  # 10. REQUIREMENTS TRACEABILITY
+  # ============================================
+  - id: requirements_traceability
+    name: "Requirements Traceability"
+    description: "Linking requirements through design, test, and defects"
+    category: requirements
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.2-SP2.1
+          practice_name: "Identify items and features to be tested"
+          maturity_level: 2
+          weight: 0.9
+        - practice_code: PA2.4-SP1.1
+          practice_name: "Identify Test Conditions"
+          maturity_level: 2
+          weight: 0.8
+        - practice_code: PA3.3-SP1.4
+          practice_name: "Define Test Traceability"
+          maturity_level: 3
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-010
+          practice_code: SP-048
+          practice_name: "Limit WIP and manage flow"
+          maturity_level: 3
+          weight: 0.5
+
+      iso9001:
+        - pa_code: L2-PA-8.2
+          clause: "8.2.1"
+          practice_code: SP061
+          practice_name: "Capture functional requirements with traceability"
+          weight: 1.0
+        - pa_code: L3-PA-8.3
+          clause: "8.3.2"
+          practice_code: SP095
+          practice_name: "Define traceability approach (req->test->release)"
+          weight: 1.0
+        - pa_code: L3-PA-8.5-8.7
+          clause: "8.6"
+          practice_code: SP117
+          practice_name: "Release traceability to requirements/tests"
+          weight: 0.9
+
+      project_risk:
+        - question_id: REQ-C3
+          question_text: "Is there a traceability mechanism?"
+          dimension: capability
+          weight: 1.0
+        - question_id: TST-O2
+          question_text: "Requirements coverage percentage"
+          dimension: operational
+          weight: 0.9
+        - question_id: REQ-C1
+          question_text: "Is there a defined requirements elicitation process?"
+          dimension: capability
+          weight: 0.8
+        - question_id: REQ-C2
+          question_text: "Are acceptance criteria defined for requirements?"
+          dimension: capability
+          weight: 0.8
+        - question_id: REQ-O1
+          question_text: "Percentage of requirements with acceptance criteria"
+          dimension: operational
+          weight: 0.8
+        - question_id: REQ-O2
+          question_text: "Requirements churn rate"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: iso9001.SP095
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 11. DEPLOYMENT & RELEASE SAFETY
+  # ============================================
+  - id: deployment_safety
+    name: "Deployment & Release Safety"
+    description: "Controls ensuring safe production deployments"
+    category: change_management
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.5-SP3.2
+          practice_name: "Control Test Environment Changes"
+          maturity_level: 2
+          weight: 0.6
+
+      dora:
+        - pa_code: PA-007
+          practice_code: SP-034
+          practice_name: "Automated health checks during rollout"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-014
+          practice_code: SP-067
+          practice_name: "Automated rollback capability"
+          maturity_level: 4
+          weight: 1.0
+        - pa_code: PA-015
+          practice_code: SP-071
+          practice_name: "Feature flags for high-risk changes"
+          maturity_level: 4
+          weight: 0.9
+        - pa_code: PA-015
+          practice_code: SP-072
+          practice_name: "Canary releases for critical services"
+          maturity_level: 4
+          weight: 0.8
+
+      iso9001:
+        - pa_code: L2-PA-8.5-8.7
+          clause: "8.5"
+          practice_code: SP115
+          practice_name: "Deployment process with rollback"
+          weight: 1.0
+        - pa_code: L2-PA-8.5-8.7
+          clause: "8.6"
+          practice_code: SP114
+          practice_name: "Release management process and approvals"
+          weight: 1.0
+        - pa_code: L3-PA-8.5-8.7
+          clause: "8.6"
+          practice_code: SP118
+          practice_name: "Pre-release checklist (quality gates)"
+          weight: 0.9
+
+      project_risk:
+        - question_id: CHG-C3
+          question_text: "Is there a release management process?"
+          dimension: capability
+          weight: 1.0
+        - question_id: ENV-O4
+          question_text: "Deployment consistency and reliability"
+          dimension: operational
+          weight: 0.9
+
+    primary_source: dora.SP-067
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 12. INCIDENT MANAGEMENT
+  # ============================================
+  - id: incident_management
+    name: "Incident Management & Response"
+    description: "Detection, response, and resolution of production incidents"
+    category: ops_readiness
+
+    equivalences:
+      tmmi:
+        - practice_code: PA4.2-SP2.1
+          practice_name: "Analyse Product Quality"
+          maturity_level: 4
+          weight: 0.6
+
+      dora:
+        - pa_code: PA-009
+          practice_code: SP-043
+          practice_name: "On-call rotation defined and staffed"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-009
+          practice_code: SP-044
+          practice_name: "Incident severity model defined"
+          maturity_level: 3
+          weight: 0.9
+        - pa_code: PA-009
+          practice_code: SP-045
+          practice_name: "Incident response runbooks maintained"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-009
+          practice_code: SP-047
+          practice_name: "MTTR measured and trended"
+          maturity_level: 3
+          weight: 0.8
+
+      iso9001:
+        - pa_code: L3-PA-8.5-8.7
+          clause: "8.5"
+          practice_code: SP123
+          practice_name: "Incident management process exists"
+          weight: 1.0
+        - pa_code: L4-PA-8.5-8.7
+          clause: "10.2"
+          practice_code: SP124
+          practice_name: "Major incident review and RCA"
+          weight: 0.9
+
+      project_risk:
+        - question_id: OPS-C2
+          question_text: "Is there an incident management process?"
+          dimension: capability
+          weight: 1.0
+        - question_id: OPS-O2
+          question_text: "Mean time to restore (MTTR)"
+          dimension: operational
+          weight: 0.9
+        - question_id: OPS-C1
+          question_text: "Is there a defined support model?"
+          dimension: capability
+          weight: 0.8
+        - question_id: OPS-C3
+          question_text: "Is there a training/handover process?"
+          dimension: capability
+          weight: 0.7
+        - question_id: OPS-O1
+          question_text: "Documentation completeness (runbooks, support guides)"
+          dimension: capability
+          weight: 0.7
+
+    primary_source: dora.SP-045
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 13. OBSERVABILITY & MONITORING
+  # ============================================
+  - id: observability
+    name: "System Observability"
+    description: "Logging, monitoring, and system visibility"
+    category: ops_readiness
+
+    equivalences:
+      tmmi:
+        - practice_code: PA4.1-SP1.1
+          practice_name: "Establish Measurement Objectives"
+          maturity_level: 4
+          weight: 0.6
+        - practice_code: PA4.1-SP2.1
+          practice_name: "Collect Measurement Data"
+          maturity_level: 4
+          weight: 0.7
+
+      dora:
+        - pa_code: PA-001
+          practice_code: SP-003
+          practice_name: "Implement metrics instrumentation"
+          maturity_level: 2
+          weight: 0.9
+        - pa_code: PA-001
+          practice_code: SP-004
+          practice_name: "Implement centralised logging"
+          maturity_level: 2
+          weight: 1.0
+        - pa_code: PA-012
+          practice_code: SP-061
+          practice_name: "Implement distributed tracing"
+          maturity_level: 4
+          weight: 0.8
+        - pa_code: PA-012
+          practice_code: SP-062
+          practice_name: "Define SLOs for critical services"
+          maturity_level: 4
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L3-PA-8.5-8.7
+          clause: "8.5"
+          practice_code: SP122
+          practice_name: "Service monitoring and alerting defined"
+          weight: 1.0
+
+      project_risk:
+        - question_id: ARC-O2
+          question_text: "System observability and logging maturity"
+          dimension: capability
+          weight: 1.0
+        - question_id: ARC-O1
+          question_text: "Overall architectural complexity"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: dora.SP-004
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 14. CHANGE CONTROL
+  # ============================================
+  - id: change_control
+    name: "Change & Configuration Control"
+    description: "Managing changes to scope, code, and configuration"
+    category: change_management
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.5-SP3.1
+          practice_name: "Manage Test Environment Configuration"
+          maturity_level: 2
+          weight: 0.7
+        - practice_code: PA2.5-SP3.2
+          practice_name: "Control Test Environment Changes"
+          maturity_level: 2
+          weight: 0.8
+
+      dora:
+        - pa_code: PA-002
+          practice_code: SP-005
+          practice_name: "Use version control for all code and config"
+          maturity_level: 2
+          weight: 1.0
+        - pa_code: PA-010
+          practice_code: SP-051
+          practice_name: "Reduce config drift with IaC"
+          maturity_level: 3
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L3-PA-7
+          clause: "7.5"
+          practice_code: SP041
+          practice_name: "Configuration management for code and infra"
+          weight: 1.0
+        - pa_code: L3-PA-8.3
+          clause: "8.3.6"
+          practice_code: SP098
+          practice_name: "Control design and development changes"
+          weight: 0.9
+        - pa_code: L3-PA-8.2
+          clause: "8.2.4"
+          practice_code: SP073
+          practice_name: "Control requirement changes via impact assessment"
+          weight: 0.8
+
+      project_risk:
+        - question_id: CHG-C1
+          question_text: "Is there a baseline management process?"
+          dimension: capability
+          weight: 0.9
+        - question_id: CHG-C2
+          question_text: "Is there a scope change control process?"
+          dimension: capability
+          weight: 1.0
+        - question_id: CHG-O1
+          question_text: "Scope change volume this period"
+          dimension: operational
+          weight: 0.8
+        - question_id: CHG-O2
+          question_text: "Build reproducibility confidence"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: iso9001.SP041
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 15. NON-FUNCTIONAL TESTING
+  # ============================================
+  - id: nonfunctional_testing
+    name: "Non-Functional Testing"
+    description: "Performance, security, and other non-functional testing"
+    category: test_strategy
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.4-SP1.1
+          practice_name: "Identify Non-Functional Risks"
+          maturity_level: 3
+          weight: 1.0
+        - practice_code: PA3.4-SP2.1
+          practice_name: "Define Non-Functional Test Approach"
+          maturity_level: 3
+          weight: 1.0
+        - practice_code: PA3.4-SP3.1
+          practice_name: "Design Non-Functional Tests"
+          maturity_level: 3
+          weight: 0.9
+        - practice_code: PA3.4-SP5.1
+          practice_name: "Execute Non-Functional Tests"
+          maturity_level: 3
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-016
+          practice_code: SP-080
+          practice_name: "Performance testing per risk"
+          maturity_level: 4
+          weight: 1.0
+        - pa_code: PA-016
+          practice_code: SP-081
+          practice_name: "Security testing integrated"
+          maturity_level: 4
+          weight: 1.0
+
+      iso9001:
+        - pa_code: L2-PA-8.2
+          clause: "8.2.2"
+          practice_code: SP062
+          practice_name: "Capture non-functional requirements (NFRs)"
+          weight: 0.9
+        - pa_code: L3-PA-8.3
+          clause: "8.3.2"
+          practice_code: SP078
+          practice_name: "Define secure SDLC controls"
+          weight: 0.8
+
+      project_risk:
+        - question_id: TST-O1
+          question_text: "Test type balance (unit/integration/E2E/NFR)"
+          dimension: operational
+          weight: 1.0
+        - question_id: ARC-C4
+          question_text: "Are NFRs defined and testable?"
+          dimension: capability
+          weight: 0.9
+
+    primary_source: tmmi.PA3.4-SP2.1
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 16. TEST ORGANISATION & COMPETENCY
+  # ============================================
+  - id: test_organisation
+    name: "Test Organisation & Competency"
+    description: "Dedicated test roles, structure, and skills development"
+    category: governance
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.1-SP1.1
+          practice_name: "Establish Test Organisation"
+          maturity_level: 3
+          weight: 1.0
+        - practice_code: PA3.1-SP2.1
+          practice_name: "Define Test Specialist Functions"
+          maturity_level: 3
+          weight: 0.9
+        - practice_code: PA3.2-SP1.1
+          practice_name: "Establish Training Capability"
+          maturity_level: 3
+          weight: 0.8
+        - practice_code: PA3.2-SP2.1
+          practice_name: "Deliver Test Training"
+          maturity_level: 3
+          weight: 0.8
+
+      dora:
+        - pa_code: PA-011
+          practice_code: SP-057
+          practice_name: "Enablement/training for CI/CD and operations"
+          maturity_level: 3
+          weight: 0.8
+
+      iso9001:
+        - pa_code: L2-PA-7
+          clause: "7.2"
+          practice_code: SP036
+          practice_name: "Define competency profiles for delivery roles"
+          weight: 0.9
+        - pa_code: L2-PA-7
+          clause: "7.2"
+          practice_code: SP037
+          practice_name: "Maintain training plan and records"
+          weight: 0.8
+        - pa_code: L3-PA-7
+          clause: "7.1"
+          practice_code: SP038
+          practice_name: "Allocate adequate QA/testing resources"
+          weight: 1.0
+
+      project_risk:
+        - question_id: GOV-C1
+          question_text: "Is there a dedicated test lead?"
+          dimension: capability
+          weight: 1.0
+        - question_id: GOV-O2
+          question_text: "Percentage of teams with dedicated test leads"
+          dimension: operational
+          weight: 0.9
+        - question_id: GOV-C4
+          question_text: "Who makes release decisions?"
+          dimension: capability
+          weight: 0.8
+        - question_id: GOV-O5
+          question_text: "Are test-related decisions documented?"
+          dimension: capability
+          weight: 0.7
+
+    primary_source: tmmi.PA3.1-SP1.1
+    propagation_confidence: 0.75
+
+  # ============================================
+  # 17. SUPPLIER QUALITY MANAGEMENT
+  # ============================================
+  - id: supplier_quality
+    name: "Supplier & Third-Party Quality"
+    description: "Managing quality of external suppliers and components"
+    category: third_party
+
+    equivalences:
+      tmmi:
+        # TMMi has limited direct supplier coverage
+        []
+
+      dora:
+        - pa_code: PA-010
+          practice_code: SP-050
+          practice_name: "Manage dependencies and integration risks"
+          maturity_level: 3
+          weight: 0.7
+
+      iso9001:
+        - pa_code: L2-PA-8.4
+          clause: "8.4.1"
+          practice_code: SP101
+          practice_name: "Define supplier evaluation criteria"
+          weight: 1.0
+        - pa_code: L3-PA-8.4
+          clause: "8.4.1"
+          practice_code: SP102
+          practice_name: "Perform supplier risk assessment"
+          weight: 1.0
+        - pa_code: L3-PA-8.4
+          clause: "8.4.2"
+          practice_code: SP103
+          practice_name: "Define SLAs/quality requirements in contracts"
+          weight: 0.9
+        - pa_code: L3-PA-8.4
+          clause: "8.4.2"
+          practice_code: SP104
+          practice_name: "Verify externally provided outputs"
+          weight: 0.9
+        - pa_code: L3-PA-8.4
+          clause: "8.4.2"
+          practice_code: SP112
+          practice_name: "Maintain inventory of third-party components"
+          weight: 0.8
+
+      project_risk:
+        - question_id: TPT-O1
+          question_text: "Number of external suppliers"
+          dimension: operational
+          weight: 0.7
+        - question_id: TPT-C2
+          question_text: "Are supplier quality requirements defined?"
+          dimension: capability
+          weight: 1.0
+        - question_id: TPT-C1
+          question_text: "Is there a dependency identification/tracking process?"
+          dimension: capability
+          weight: 0.8
+        - question_id: TPT-C3
+          question_text: "Is there a security assessment process for third parties?"
+          dimension: capability
+          weight: 0.7
+        - question_id: TPT-C4
+          question_text: "Do suppliers provide test evidence before delivery?"
+          dimension: capability
+          weight: 0.8
+        - question_id: TPT-O3
+          question_text: "Percentage of defects that are supplier-related"
+          dimension: operational
+          weight: 0.8
+        - question_id: TPT-O4
+          question_text: "Level of control over integrated systems"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: iso9001.SP102
+    propagation_confidence: 0.75
+
+  # ============================================
+  # 18. DEFECT PREVENTION & ROOT CAUSE
+  # ============================================
+  - id: defect_prevention
+    name: "Defect Prevention & Root Cause Analysis"
+    description: "Preventing defect recurrence through systematic analysis"
+    category: feedback
+
+    equivalences:
+      tmmi:
+        - practice_code: PA5.1-SP1.1
+          practice_name: "Analyse Causes of Defects"
+          maturity_level: 5
+          weight: 1.0
+        - practice_code: PA5.1-SP1.2
+          practice_name: "Identify Common Causes"
+          maturity_level: 5
+          weight: 1.0
+        - practice_code: PA5.1-SP2.1
+          practice_name: "Prioritise and Define Prevention Actions"
+          maturity_level: 5
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-017
+          practice_code: SP-090
+          practice_name: "Post-incident reviews held (blameless)"
+          maturity_level: 4
+          weight: 1.0
+        - pa_code: PA-017
+          practice_code: SP-091
+          practice_name: "Root cause analysis for significant incidents"
+          maturity_level: 4
+          weight: 1.0
+        - pa_code: PA-016
+          practice_code: SP-083
+          practice_name: "Shift-left defect prevention"
+          maturity_level: 4
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L4-PA-9-10
+          clause: "10.2"
+          practice_code: SP145
+          practice_name: "Root cause analysis for significant NCs"
+          weight: 1.0
+        - pa_code: L4-PA-9-10
+          clause: "10.2"
+          practice_code: SP146
+          practice_name: "Corrective actions address root causes"
+          weight: 1.0
+        - pa_code: L4-PA-9-10
+          clause: "10.3"
+          practice_code: SP149
+          practice_name: "Lessons learned institutionalised"
+          weight: 0.8
+
+      project_risk:
+        - question_id: FBK-C1
+          question_text: "Is there a defect tracking and classification process?"
+          dimension: capability
+          weight: 1.0
+          # FBK-C2 RETIRED - using FBK-C1 which includes "analysed with root cause" option
+
+    primary_source: dora.SP-091
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 19. QUALITY GATES & GOVERNANCE
+  # ============================================
+  - id: quality_gates
+    name: "Quality Gates & Decision Authority"
+    description: "Formal quality checkpoints with enforcement authority"
+    category: governance
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.2-SP2.3
+          practice_name: "Define Entry Criteria"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.2-SP2.4
+          practice_name: "Define Exit Criteria"
+          maturity_level: 2
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-042
+          practice_name: "Quality gates (defect thresholds)"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-011
+          practice_code: SP-055
+          practice_name: "Decision rights for quality/release clear"
+          maturity_level: 3
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L3-PA-6
+          clause: "6.1"
+          practice_code: SP025
+          practice_name: "Define release quality gates/go-no-go criteria"
+          weight: 1.0
+        - pa_code: L3-PA-8.1
+          clause: "8.1"
+          practice_code: SP051
+          practice_name: "Define quality gates aligned to risk"
+          weight: 1.0
+        - pa_code: L4-PA-5
+          clause: "5.3"
+          practice_code: SP020
+          practice_name: "Define escalation/decision rights"
+          weight: 0.9
+
+      project_risk:
+        - question_id: GOV-C2
+          question_text: "Does test lead have release authority?"
+          dimension: capability
+          weight: 1.0
+        - question_id: GOV-O3
+          question_text: "Quality gate compliance rate"
+          dimension: operational
+          weight: 0.9
+        - question_id: GOV-C3
+          question_text: "Are quality gates defined with entry/exit criteria?"
+          dimension: capability
+          weight: 0.9
+
+    primary_source: iso9001.SP025
+    propagation_confidence: 0.85
+
+  # ============================================
+  # 20. CONTINUOUS IMPROVEMENT
+  # ============================================
+  - id: continuous_improvement
+    name: "Continuous Improvement Culture"
+    description: "Systematic process improvement and learning"
+    category: governance
+
+    equivalences:
+      tmmi:
+        - practice_code: PA5.2-SP1.1
+          practice_name: "Establish Process Improvement Objectives"
+          maturity_level: 5
+          weight: 1.0
+        - practice_code: PA5.3-SP1.1
+          practice_name: "Collect Improvement Proposals"
+          maturity_level: 5
+          weight: 0.9
+        - practice_code: PA5.3-SP3.1
+          practice_name: "Deploy Improvements"
+          maturity_level: 5
+          weight: 0.9
+
+      dora:
+        - pa_code: PA-011
+          practice_code: SP-056
+          practice_name: "Retrospectives held and actions tracked"
+          maturity_level: 3
+          weight: 1.0
+        - pa_code: PA-019
+          practice_code: SP-104
+          practice_name: "Continuous improvement backlog maintained"
+          maturity_level: 4
+          weight: 1.0
+        - pa_code: PA-026
+          practice_code: SP-119
+          practice_name: "Measure improvement effectiveness"
+          maturity_level: 5
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L4-PA-9-10
+          clause: "10.3"
+          practice_code: SP148
+          practice_name: "Maintain continual improvement register"
+          weight: 1.0
+        - pa_code: L5-PA-4
+          clause: "10.3"
+          practice_code: SP011
+          practice_name: "Maintain process improvement backlog"
+          weight: 0.9
+
+      project_risk:
+        - question_id: TST-O4
+          question_text: "Are test metrics collected and analysed?"
+          dimension: capability
+          weight: 1.0
+        - question_id: FBK-O2
+          question_text: "How often are metrics reviewed and acted upon?"
+          dimension: operational
+          weight: 0.9
+
+    primary_source: dora.SP-056
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 21. TEST PHASE EXECUTION
+  # ============================================
+  - id: phase_execution
+    name: "Project & Test Phase Execution"
+    description: "Readiness confidence, pass rates, execution progress, and blocker tracking across all project lifecycle phases"
+    category: test_phase_progress
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.4-SP3.1
+          practice_name: "Execute Test Procedures"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.3-SP1.5
+          practice_name: "Conduct Test Progress Reviews"
+          maturity_level: 2
+          weight: 0.8
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-037
+          practice_name: "Healthy test pyramid established"
+          maturity_level: 3
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.4"
+          practice_code: SP085
+          practice_name: "Unit verification before integration"
+          weight: 0.8
+        - pa_code: L3-PA-8.5-8.7
+          clause: "8.6"
+          practice_code: SP117
+          practice_name: "Release traceability to requirements/tests"
+          weight: 0.7
+
+      project_risk:
+        - question_id: TPP-O10
+          question_text: "Discovery readiness confidence"
+          dimension: operational
+          weight: 0.7
+        - question_id: TPP-O11
+          question_text: "Requirements completeness confidence"
+          dimension: operational
+          weight: 0.9
+        - question_id: TPP-O12
+          question_text: "Design review confidence"
+          dimension: operational
+          weight: 0.8
+        - question_id: PROPOSED-TPP-PHASE
+          question_text: "Per-phase pass rates, execution progress, blockers, and entry criteria"
+          dimension: operational
+          weight: 1.0
+        - question_id: TPP-O8
+          question_text: "Overall test execution progress"
+          dimension: operational
+          weight: 1.0
+        - question_id: TPP-O13
+          question_text: "Release readiness confidence"
+          dimension: operational
+          weight: 1.0
+        - question_id: TPP-O14
+          question_text: "Hypercare confidence level"
+          dimension: operational
+          weight: 0.7
+        - question_id: TPP-CY1
+          question_text: "System testing cycles completed"
+          dimension: operational
+          weight: 0.6
+        - question_id: TPP-CY2
+          question_text: "System testing cycles planned"
+          dimension: capability
+          weight: 0.6
+        - question_id: TPP-CY3
+          question_text: "UAT cycles completed"
+          dimension: operational
+          weight: 0.6
+        - question_id: TPP-CY4
+          question_text: "UAT cycles planned"
+          dimension: capability
+          weight: 0.6
+
+    primary_source: project_risk.TPP-O8
+    propagation_confidence: 0.75
+
+  # ============================================
+  # 22. TEST PHASE GOVERNANCE
+  # ============================================
+  - id: phase_governance
+    name: "Test Phase Governance"
+    description: "Entry/exit criteria, blocker tracking, and phase transition governance"
+    category: test_phase_progress
+
+    equivalences:
+      tmmi:
+        - practice_code: PA2.2-SP2.3
+          practice_name: "Define Entry Criteria"
+          maturity_level: 2
+          weight: 1.0
+        - practice_code: PA2.2-SP2.4
+          practice_name: "Define Exit Criteria"
+          maturity_level: 2
+          weight: 1.0
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-042
+          practice_name: "Quality gates (defect thresholds)"
+          maturity_level: 3
+          weight: 0.9
+
+      iso9001:
+        - pa_code: L3-PA-6
+          clause: "6.1"
+          practice_code: SP025
+          practice_name: "Define release quality gates/go-no-go criteria"
+          weight: 1.0
+
+      project_risk:
+        - question_id: TPP-C1
+          question_text: "Entry/exit criteria defined per phase"
+          dimension: capability
+          weight: 1.0
+        - question_id: TPP-C2
+          question_text: "Blockers formally tracked"
+          dimension: capability
+          weight: 0.8
+        - question_id: TPP-C3
+          question_text: "Phase transition governance"
+          dimension: capability
+          weight: 1.0
+        - question_id: TPP-EC1
+          question_text: "Formal entry/exit criteria defined per test phase"
+          dimension: capability
+          weight: 0.9
+
+    primary_source: project_risk.TPP-C1
+    propagation_confidence: 0.80
+
+  # ============================================
+  # 23. TESTABILITY DESIGN
+  # ============================================
+  - id: testability_design
+    name: "Testability by Design"
+    description: "Architectural decisions that enable effective testing"
+    category: architecture
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.4-SP1.1
+          practice_name: "Identify Non-Functional Risks"
+          maturity_level: 3
+          weight: 0.6
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-037
+          practice_name: "Healthy test pyramid established"
+          maturity_level: 3
+          weight: 0.7
+
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.2"
+          practice_code: SP076
+          practice_name: "Design for testability and maintainability"
+          weight: 0.9
+
+      project_risk:
+        - question_id: ARC-C2
+          question_text: "Was testability explicitly designed into the architecture?"
+          dimension: capability
+          weight: 1.0
+        - question_id: ARC-C3
+          question_text: "How well can components be tested in isolation?"
+          dimension: capability
+          weight: 0.9
+
+    primary_source: project_risk.ARC-C2
+    propagation_confidence: 0.75
+
+  # ============================================
+  # 24. LEGACY MANAGEMENT
+  # ============================================
+  - id: legacy_management
+    name: "Legacy System Management"
+    description: "Managing test and modernisation challenges for legacy systems"
+    category: architecture
+
+    equivalences:
+      tmmi:
+        []
+
+      dora:
+        - pa_code: PA-010
+          practice_code: SP-050
+          practice_name: "Manage dependencies and integration risks"
+          maturity_level: 3
+          weight: 0.6
+
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.6"
+          practice_code: SP098
+          practice_name: "Control design and development changes"
+          weight: 0.7
+
+      project_risk:
+        - question_id: ARC-C5a
+          question_text: "Is there a legacy modernisation plan?"
+          dimension: capability
+          weight: 1.0
+        - question_id: ARC-C5b
+          question_text: "Percentage of codebase that is legacy"
+          dimension: capability
+          weight: 0.8
+        - question_id: ARC-LG-01
+          question_text: "Legacy system role in project"
+          dimension: capability
+          weight: 0.9
+        - question_id: ARC-LG-02
+          question_text: "Legacy system documentation quality"
+          dimension: capability
+          weight: 0.8
+        - question_id: ARC-LG-03
+          question_text: "Access to legacy system expertise"
+          dimension: capability
+          weight: 0.8
+        - question_id: ARC-LG-04
+          question_text: "Legacy system test coverage"
+          dimension: capability
+          weight: 0.9
+
+    primary_source: project_risk.ARC-C5a
+    propagation_confidence: 0.70
+
+  # ============================================
+  # 24b. ARCHITECTURAL COMPLEXITY
+  # ============================================
+  - id: architectural_complexity
+    name: "Architectural Complexity"
+    description: "Operational complexity and maintainability of the architecture"
+    category: architecture
+
+    equivalences:
+      tmmi:
+        []
+
+      dora:
+        - pa_code: PA-010
+          practice_code: SP-050
+          practice_name: "Manage dependencies and integration risks"
+          maturity_level: 3
+          weight: 0.7
+
+      iso9001:
+        []
+
+      project_risk:
+        - question_id: ARC-O1
+          question_text: "Overall architectural complexity"
+          dimension: operational
+          weight: 1.0
+
+    primary_source: project_risk.ARC-O1
+    propagation_confidence: 0.70
+
+  # ============================================
+  # 25. LIFE SAFETY COMPLIANCE
+  # ============================================
+  - id: life_safety_compliance
+    name: "Life Safety Regulatory Compliance"
+    description: "FDA, IEC 62304, ISO 13485, and HIPAA compliance for life-safety systems"
+    category: life_safety
+
+    equivalences:
+      tmmi:
+        []
+
+      dora:
+        []
+
+      iso9001:
+        - pa_code: L3-PA-8.3
+          clause: "8.3.4"
+          practice_code: SP088
+          practice_name: "Design controls and verification"
+          weight: 0.8
+
+      project_risk:
+        - question_id: RC-LS-01
+          question_text: "Is there a formal validation master plan?"
+          dimension: capability
+          weight: 1.0
+        - question_id: RC-LS-02
+          question_text: "Are design controls (IEC 62304 / FDA) implemented?"
+          dimension: capability
+          weight: 1.0
+        - question_id: RC-LS-03
+          question_text: "Is there a CAPA process?"
+          dimension: capability
+          weight: 0.9
+        - question_id: RC-LS-05
+          question_text: "Is there 21 CFR Part 11 compliant audit trail?"
+          dimension: capability
+          weight: 0.8
+
+    primary_source: project_risk.RC-LS-01
+    propagation_confidence: 0.75
+
+  # ============================================
+  # 26. AUTOMOTIVE COMPLIANCE
+  # ============================================
+  - id: automotive_compliance
+    name: "Automotive Safety & ASPICE Compliance"
+    description: "ISO 26262, ASPICE, and ISO/SAE 21434 compliance for automotive systems"
+    category: automotive_safety
+
+    equivalences:
+      tmmi:
+        []
+
+      dora:
+        []
+
+      iso9001:
+        - pa_code: L3-PA-8.4
+          clause: "8.4.2"
+          practice_code: SP104
+          practice_name: "Verify externally provided outputs"
+          weight: 0.7
+
+      project_risk:
+        - question_id: RC-AUTO-02
+          question_text: "Safety Case / Safety Plan documentation status"
+          dimension: capability
+          weight: 1.0
+        - question_id: RC-AUTO-03
+          question_text: "ASPICE capability level target"
+          dimension: capability
+          weight: 0.9
+        - question_id: RC-AUTO-05
+          question_text: "Cybersecurity TARA per ISO/SAE 21434"
+          dimension: capability
+          weight: 0.9
+        - question_id: RC-AUTO-06
+          question_text: "SBOM tracking for open source and third-party software"
+          dimension: capability
+          weight: 0.8
+        - question_id: RC-AUTO-07
+          question_text: "Bidirectional traceability from requirements to test results"
+          dimension: capability
+          weight: 1.0
+        - question_id: RC-AUTO-08
+          question_text: "Supplier ASPICE compliance requirements"
+          dimension: capability
+          weight: 0.8
+
+    primary_source: project_risk.RC-AUTO-02
+    propagation_confidence: 0.75
+
+  # ============================================
+  # 27. AUTOMATION DIAGNOSTICS
+  # ============================================
+  - id: automation_diagnostics
+    name: "Automation Health Diagnostics"
+    description: "Deep-dive diagnostics for struggling or failing automation"
+    category: test_assets
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.3-SP2.2
+          practice_name: "Implement Test Automation"
+          maturity_level: 3
+          weight: 0.6
+
+      dora:
+        - pa_code: PA-008
+          practice_code: SP-038
+          practice_name: "Automate integration tests in pipeline"
+          maturity_level: 3
+          weight: 0.5
+
+      iso9001:
+        []
+
+      project_risk:
+        - question_id: TAM-DX-02
+          question_text: "How long has automation been in troubled state?"
+          dimension: operational
+          weight: 0.9
+        - question_id: TAM-DX-03
+          question_text: "Has there been a previous remediation attempt?"
+          dimension: operational
+          weight: 0.7
+        - question_id: TAM-DX-04
+          question_text: "Percentage of failures investigated vs dismissed as flaky"
+          dimension: operational
+          weight: 0.8
+        - question_id: TAM-DX-05
+          question_text: "Pressure to just make tests green"
+          dimension: operational
+          weight: 0.8
+
+    primary_source: project_risk.TAM-DX-02
+    propagation_confidence: 0.70
+
+  # ============================================
+  # 28. ENTERPRISE OPERATIONS
+  # ============================================
+  - id: enterprise_operations
+    name: "Enterprise Scale Operations"
+    description: "Follow-the-sun support, regional compliance, and data residency"
+    category: enterprise_scale
+
+    equivalences:
+      tmmi:
+        []
+
+      dora:
+        - pa_code: PA-009
+          practice_code: SP-043
+          practice_name: "On-call rotation defined and staffed"
+          maturity_level: 3
+          weight: 0.6
+
+      iso9001:
+        - pa_code: L3-PA-8.5-8.7
+          clause: "8.5"
+          practice_code: SP123
+          practice_name: "Incident management process exists"
+          weight: 0.5
+
+      project_risk:
+        - question_id: SC-ENT-01
+          question_text: "Is there a follow-the-sun support model?"
+          dimension: operational
+          weight: 0.9
+        - question_id: SC-ENT-02
+          question_text: "Are there regional data residency requirements?"
+          dimension: capability
+          weight: 0.8
+        - question_id: SC-ENT-05
+          question_text: "Regional compliance variations tracked?"
+          dimension: capability
+          weight: 0.8
+
+    primary_source: project_risk.SC-ENT-01
+    propagation_confidence: 0.65
+
+  # ============================================
+  # 29. SUPPLIER QUALITY DEEP DIVE
+  # ============================================
+  - id: supplier_quality_deep_dive
+    name: "Supplier Quality Deep Dive"
+    description: "Detailed supplier quality scorecarding, integration testing, and remedies"
+    category: third_party
+
+    equivalences:
+      tmmi:
+        []
+
+      dora:
+        - pa_code: PA-010
+          practice_code: SP-050
+          practice_name: "Manage dependencies and integration risks"
+          maturity_level: 3
+          weight: 0.6
+
+      iso9001:
+        - pa_code: L3-PA-8.4
+          clause: "8.4.1"
+          practice_code: SP102
+          practice_name: "Perform supplier risk assessment"
+          weight: 0.8
+        - pa_code: L3-PA-8.4
+          clause: "8.4.2"
+          practice_code: SP104
+          practice_name: "Verify externally provided outputs"
+          weight: 0.7
+
+      project_risk:
+        - question_id: TPT-SQ-01
+          question_text: "Is there a supplier quality scorecard?"
+          dimension: operational
+          weight: 0.9
+        - question_id: TPT-SQ-02
+          question_text: "Supplier integration testing approach"
+          dimension: operational
+          weight: 0.8
+        - question_id: TPT-SQ-03
+          question_text: "Defect attribution to specific suppliers tracked?"
+          dimension: operational
+          weight: 0.8
+        - question_id: TPT-SQ-04
+          question_text: "Remedies exercised for poor supplier quality"
+          dimension: operational
+          weight: 0.7
+
+    primary_source: project_risk.TPT-SQ-01
+    propagation_confidence: 0.70
+
+  # ============================================
+  # 30. GOVERNANCE AUTHORITY
+  # ============================================
+  - id: governance_authority
+    name: "Governance Authority & Executive Sponsorship"
+    description: "Quality authority, executive sponsorship, and resistance to deadline pressure"
+    category: governance
+
+    equivalences:
+      tmmi:
+        - practice_code: PA3.1-SP1.1
+          practice_name: "Establish Test Organisation"
+          maturity_level: 3
+          weight: 0.5
+
+      dora:
+        - pa_code: PA-011
+          practice_code: SP-055
+          practice_name: "Decision rights for quality/release clear"
+          maturity_level: 3
+          weight: 0.8
+
+      iso9001:
+        - pa_code: L4-PA-5
+          clause: "5.3"
+          practice_code: SP020
+          practice_name: "Define escalation/decision rights"
+          weight: 0.9
+
+      project_risk:
+        - question_id: GOV-AG-02
+          question_text: "Has quality been overridden to meet deadlines?"
+          dimension: operational
+          weight: 0.9
+        - question_id: GOV-AG-03
+          question_text: "Is there executive sponsorship for quality?"
+          dimension: capability
+          weight: 1.0
+
+    primary_source: project_risk.GOV-AG-03
+    propagation_confidence: 0.75
+
+# ============================================
+# CATEGORY DEFINITIONS
+# Groups of related capabilities for reporting
+# ============================================
+categories:
+  governance:
+    name: "Governance & Leadership"
+    description: "Test policy, organisation, quality gates, and continuous improvement"
+    capabilities: [test_policy_strategy, test_monitoring, quality_gates, test_organisation, continuous_improvement, governance_authority]
+
+  test_strategy:
+    name: "Test Strategy & Design"
+    description: "Risk-based testing, planning, and non-functional testing"
+    capabilities: [risk_based_testing, test_planning, nonfunctional_testing]
+
+  test_assets:
+    name: "Test Assets & Automation"
+    description: "Test automation strategy, implementation, and diagnostics"
+    capabilities: [test_automation, automation_diagnostics]
+
+  development:
+    name: "Development Practices"
+    description: "Code review and development quality practices"
+    capabilities: [code_review, coding_standards, unit_testing, static_analysis, build_automation]
+
+  environment:
+    name: "Environments & Infrastructure"
+    description: "Test environments and CI/CD pipelines"
+    capabilities: [test_environment, cicd_pipeline]
+
+  requirements:
+    name: "Requirements & Traceability"
+    description: "Requirements management and traceability"
+    capabilities: [requirements_traceability]
+
+  change_management:
+    name: "Change & Release Management"
+    description: "Change control and deployment safety"
+    capabilities: [change_control, deployment_safety]
+
+  feedback:
+    name: "Feedback & Defect Management"
+    description: "Defect tracking, prevention, and learning"
+    capabilities: [defect_management, defect_prevention]
+
+  ops_readiness:
+    name: "Operational Readiness"
+    description: "Incident management and observability"
+    capabilities: [incident_management, observability]
+
+  third_party:
+    name: "Third Party & Suppliers"
+    description: "Supplier and component quality management"
+    capabilities: [supplier_quality, supplier_quality_deep_dive]
+
+  test_phase_progress:
+    name: "Test Phase Progress"
+    description: "Execution progress, pass rates, and governance across test phases"
+    capabilities: [phase_execution, phase_governance]
+
+  architecture:
+    name: "Architecture & Testability"
+    description: "Testability design, legacy system management, and architectural complexity"
+    capabilities: [testability_design, legacy_management, architectural_complexity]
+
+  life_safety:
+    name: "Life Safety Compliance"
+    description: "FDA, IEC 62304, ISO 13485, and HIPAA regulatory compliance"
+    capabilities: [life_safety_compliance]
+
+  automotive_safety:
+    name: "Automotive Safety Compliance"
+    description: "ISO 26262, ASPICE, and ISO/SAE 21434 regulatory compliance"
+    capabilities: [automotive_compliance]
+
+  enterprise_scale:
+    name: "Enterprise Scale"
+    description: "Multi-region operations, data residency, and follow-the-sun support"
+    capabilities: [enterprise_operations]

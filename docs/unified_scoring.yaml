@@ -1,0 +1,264 @@
+# Unified Scoring Configuration
+# Configuration for unified maturity scoring across all frameworks
+# Version: 1.0
+
+version: "2.0"
+description: "Configuration for unified maturity scoring from the 15-category assessment. Framework modules provide independent supplementary insight."
+
+# ============================================
+# N/P/L/F NORMALISATION
+# ============================================
+normalisation:
+  # Midpoint values for score calculation
+  nplf_to_percentage:
+    N: 7.5     # Not Achieved: 0-15%, midpoint 7.5%
+    P: 32.5    # Partially Achieved: 15-50%, midpoint 32.5%
+    L: 67.5    # Largely Achieved: 50-85%, midpoint 67.5%
+    F: 92.5    # Fully Achieved: 85-100%, midpoint 92.5%
+    NR: 0      # Not Rated: treated as 0 for calculation
+    NA: null   # Not Applicable: excluded from calculation
+
+  # Range-based scoring (when sub-questions provide evidence quality)
+  nplf_ranges:
+    N:  { min: 0,  max: 15 }
+    P:  { min: 15, max: 50 }
+    L:  { min: 50, max: 85 }
+    F:  { min: 85, max: 100 }
+
+# ============================================
+# FRACTIONAL LEVEL CALCULATION
+# ============================================
+fractional_level:
+  method: base_plus_progress
+
+  # A level is "achieved" when ALL practices at that level >= this threshold
+  achievement_threshold: 67.5  # Must be >= L (Largely Achieved)
+
+  # Calculation: Base_Level + (Next_Level_Average / 100)
+  # Example: L2 achieved + L3 practices at 45% average = L2.45
+
+  # Strict mode requires ALL practices >= threshold
+  # Relaxed mode uses average >= threshold
+  strict_mode: true
+
+  # Floor and ceiling
+  minimum_level: 1.00
+  maximum_level: 5.00
+
+  # Cannot skip levels (must achieve L2 before counting L3 progress)
+  enforce_sequential: true
+
+# ============================================
+# FRAMEWORK WEIGHTS (DEPRECATED)
+# Framework modules no longer contribute to the unified maturity score.
+# The maturity score is derived purely from the 15-category assessment.
+# Framework modules (TMMi, DORA, ISO 9001) produce independent scores
+# for supplementary insight only.
+# ============================================
+
+# ============================================
+# CONTEXT MODIFIERS
+# ============================================
+context_modifiers:
+  # Regulatory context (multiplies risk weight)
+  regulatory:
+    none: 1.0
+    gdpr: 1.2
+    hipaa: 1.5
+    pci_dss: 1.5
+    sox: 1.4
+    fda_21_cfr_11: 1.6
+    iso_13485: 1.5
+    iso_27001: 1.3
+    iso_9001_certified: 1.2
+    fedramp: 1.5
+    iec_62443: 1.5
+    other: 1.3
+
+  # Audit frequency adjustment (adds to regulatory modifier)
+  audit_frequency:
+    none: 0.0
+    annual: 0.0
+    bi_annual: 0.05
+    quarterly: 0.1
+    continuous: 0.2
+
+  # Scale context
+  scale:
+    small: 0.8        # <1,000 users, <10 developers
+    medium: 1.0       # 1,000-10,000 users, 10-50 developers
+    large: 1.3        # 10,000-100,000 users, 50-200 developers
+    enterprise: 1.5   # 100,000+ users, 200+ developers
+
+  # Geographic distribution
+  geographic:
+    local: 0.9
+    national: 1.0
+    multinational: 1.2
+    global: 1.4
+
+  # Delivery model
+  delivery_model:
+    waterfall: 1.1
+    hybrid_traditional: 1.05
+    hybrid_agile: 1.0
+    agile: 0.95
+    devops: 0.9
+    continuous: 0.85
+
+  # Scale-affected categories (apply scale modifier with increased weight)
+  scale_affected_categories:
+    environment: 1.5
+    test_strategy: 1.2
+    ops_readiness: 1.2
+    third_party: 1.3
+
+# ============================================
+# SUPPLEMENTARY SCORING
+# When multiple frameworks assess same capability
+# ============================================
+supplementary_scoring:
+  enabled: true
+  method: weighted_blend
+
+  # Adjusted_Score = (Base_Score * base_weight) + (Supplement_Score * supplement_weight)
+  base_weight: 0.6
+  supplement_weight: 0.4
+
+  # Supplement score = average of related practice scores from other frameworks
+  # Only applies when capability mapping exists in cross_framework_mapping.yaml
+
+# ============================================
+# DIMENSION WEIGHTING BY PHASE
+# Capability vs Operational dimension weights
+# ============================================
+phase_weights:
+  initiation:
+    capability: 0.90
+    operational: 0.10
+    rationale: "Assessing potential, limited track record"
+
+  planning:
+    capability: 0.80
+    operational: 0.20
+    rationale: "Validating plans exist, some early indicators"
+
+  execution:
+    capability: 0.50
+    operational: 0.50
+    rationale: "Balanced - plans should be producing results"
+
+  maturation:
+    capability: 0.25
+    operational: 0.75
+    rationale: "Results matter more than intentions"
+
+  transition:
+    capability: 0.30
+    operational: 0.70
+    rationale: "Proving operational readiness"
+
+  closure:
+    capability: 0.20
+    operational: 0.80
+    rationale: "Did they deliver? Evidence-based"
+
+  maintenance:
+    capability: 0.40
+    operational: 0.60
+    rationale: "Sustainable capability + current performance"
+
+# ============================================
+# RISK INTERPRETATION
+# ============================================
+risk_levels:
+  - level: low
+    score_range: { min: 0, max: 20 }
+    maturity_equivalent: { min: 4.0, max: 5.0 }
+    interpretation: "Well-managed, continue monitoring"
+    colour: green
+    hex: "#22c55e"
+
+  - level: moderate
+    score_range: { min: 20, max: 40 }
+    maturity_equivalent: { min: 3.0, max: 3.99 }
+    interpretation: "Some concerns, targeted attention needed"
+    colour: yellow
+    hex: "#eab308"
+
+  - level: high
+    score_range: { min: 40, max: 60 }
+    maturity_equivalent: { min: 2.5, max: 2.99 }
+    interpretation: "Significant risks, intervention required"
+    colour: orange
+    hex: "#f97316"
+
+  - level: very_high
+    score_range: { min: 60, max: 80 }
+    maturity_equivalent: { min: 2.0, max: 2.49 }
+    interpretation: "Critical risks, immediate action needed"
+    colour: red
+    hex: "#ef4444"
+
+  - level: extreme
+    score_range: { min: 80, max: 100 }
+    maturity_equivalent: { min: 1.0, max: 1.99 }
+    interpretation: "Project viability in question"
+    colour: dark_red
+    hex: "#991b1b"
+
+# ============================================
+# DIAGNOSTIC CLASSIFICATION (v2.0)
+# ============================================
+diagnostic:
+  # v2.0: Fixed-threshold classification rules
+  method: fixed_threshold
+
+  # Classification thresholds
+  high_threshold: 60      # "High" when score >= 60%
+  low_threshold: 50       # "Low" when score < 50%
+  balanced_gap: 15        # "Balanced" when |gap| <= 15%
+  divergence_gap: 20      # "Divergent" when |gap| > 20%
+
+  # Gap severity bands (absolute difference between capability and operational)
+  gap_severity:
+    large: 25       # |gap| > 25% = large gap
+    moderate: 10    # |gap| 10-25% = moderate gap
+    small: 0        # |gap| 0-10% = aligned
+
+  # Classification descriptions
+  classification_descriptions:
+    "Balanced High": "Strong foundation and execution — maintain and optimise"
+    "Balanced Low": "Weak across both dimensions — prioritise fundamentals"
+    "Capability > Operational": "Capability without execution — close the delivery gap"
+    "Operational > Capability": "Doing without structure — formalise practices"
+    "Mid-range": "Mixed maturity — targeted improvements needed"
+
+# ============================================
+# MATURITY LEVEL DEFINITIONS
+# ============================================
+maturity_levels:
+  1:
+    name: "Initial"
+    description: "Ad-hoc processes, unpredictable outcomes"
+    percentage_range: { min: 0, max: 20 }
+
+  2:
+    name: "Managed"
+    description: "Basic processes established at project level"
+    percentage_range: { min: 20, max: 40 }
+
+  3:
+    name: "Defined"
+    description: "Standardised processes across organisation"
+    percentage_range: { min: 40, max: 60 }
+
+  4:
+    name: "Quantitatively Managed"
+    description: "Processes measured and controlled"
+    percentage_range: { min: 60, max: 80 }
+
+  5:
+    name: "Optimising"
+    description: "Continuous improvement culture"
+    percentage_range: { min: 80, max: 100 }
