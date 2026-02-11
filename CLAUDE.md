@@ -1,65 +1,118 @@
-# CLAUDE.md — Cap/Ops Balance Simulation Research
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
 
 **Research project** exploring whether there is a derivable "sweet spot" on the Capability vs Operational maturity grid that maximises software project success, parameterised by project type.
 
-**Core hypothesis:** Success is not maximum maturity — it is *right-sized* maturity. Every position on the Cap/Ops grid can succeed, but each carries costs that must be absorbable by the organisation. Success is a three-part test: viable (stakes covered), sustainable (team/org can maintain it), sufficient (delivers what stakeholders need).
+**Core hypothesis:** Success is not maximum maturity — it is *right-sized* maturity. Every position on the Cap/Ops grid can succeed, but each carries costs that must be absorbable by the organisation.
 
-**Origin:** This research derives from the MIRA platform (QA maturity assessment tool combining TMMi, DORA, and ISO 9001). MIRA separates maturity into two independent axes — Capability (what you *can* do) and Operational (what you *are* doing) — and this project asks: for each project type, where *should* the balance sit?
+**Origin:** Derives from the MIRA platform (QA maturity assessment tool combining TMMi, DORA, and ISO 9001). MIRA separates maturity into two independent axes — Capability (what you *can* do) and Operational (what you *are* doing). The MIRA source project is at `C:\Projects\qa-strategy-tool` if deeper reference is needed.
 
-## Key Documents
+## Running the Code
 
-All reference material is in `docs/`:
+All modules run from `src/` directory (required for imports):
 
-| File | Purpose |
-|------|---------|
-| `docs/SIMULATION_HANDOFF.md` | **Primary reference** — complete research brief with all variables, archetypes, success function, prior art, calibration data. Start here. |
-| `docs/mira_persona_definitions.md` | 12 detailed persona narratives with expected KPI patterns and quadrant positions |
-| `docs/cross_framework_mapping.yaml` | MIRA's 15 categories, 35 capabilities, and cross-framework practice mappings |
-| `docs/unified_scoring.yaml` | Scoring thresholds, risk levels, phase weights, context modifiers |
-| `docs/adaptive_filtering_rules.yaml` | Progressive disclosure rules that gate operational questions behind capability thresholds |
+```bash
+cd src
+python dimension_slider_mapping.py   # Calibration results, sensitivity matrix
+python viable_zones.py               # Zone analysis, heatmaps for all 15 archetypes
+python slider_sensitivity.py         # Q2+Q7: slider impacts and toxic combinations (~30-60s)
+python movement_analysis.py          # Q4+Q5+Q8: off-diagonal, transitions, P8 retrodiction
+python midrange_analysis.py          # Q6: mid-range investigation
+```
+
+Dependencies: `numpy`, `scipy` (for L-BFGS-B optimisation in dimension_slider_mapping only).
+
+## Architecture
+
+### Module Dependency Chain
+
+```
+dimension_slider_mapping.py          # Layer 0: dimensions -> sliders
+        |
+        v
+viable_zones.py                      # Layer 1: sliders + dims -> viable zones
+        |
+        +---> slider_sensitivity.py  # Layer 2a: slider impact analysis
+        +---> movement_analysis.py   # Layer 2b: transitions and retrodiction
+        +---> midrange_analysis.py   # Layer 2c: mid-range investigation
+```
+
+### `src/dimension_slider_mapping.py` — Dimension-to-Slider Mapping
+
+Maps 8 project dimensions to 4 capacity sliders using weighted piecewise transforms. Two-layer architecture:
+- **Layer 1**: Structural baseline calibrated via L-BFGS-B with L2 regularisation against 12 MIRA personas (MAE=0.092, LOO-CV MAE=0.142)
+- **Layer 2**: State modifiers (phase, crisis, culture, erosion) — domain-derived, not optimised (combined MAE=0.058)
+
+Key exports: `ARCHETYPE_SLIDER_DEFAULTS`, `SLIDER_SHORT`, `DIMENSION_SHORT`, `PHASE_MODIFIERS`, `CRISIS_MODIFIERS`, `EROSION_MODIFIERS`
+
+### `src/viable_zones.py` — Viable Zone Derivation
+
+Sweeps the 101x101 Cap/Ops grid for all 15 archetypes evaluating three sigmoid-based success tests:
+1. **Viable** — cap >= cap_floor (buffered by Recovery)
+2. **Sufficient** — ops >= ops_floor (buffered by Overwork)
+3. **Sustainable** — four cost components (gap, debt, process, execution) below threshold
+
+Key exports: `sweep_grid()`, `ARCHETYPE_DIMENSIONS`, `ARCHETYPE_DEFAULT_POSITIONS`, `ARCHETYPE_ORDER`, `PASS_THRESHOLD`, `test_viable()`, `test_sufficient()`, `test_sustainable()`
+
+### `src/slider_sensitivity.py` — Slider Impact Analysis (Q2 + Q7)
+
+Sweeps each slider 0->1 measuring zone area change. Tests all 6 pairwise interactions using additive independence model. Uses grid cache for performance (~800 sweeps).
+
+Key export: `_cached_zone_area()` (reused by other modules)
+
+### `src/movement_analysis.py` — Movement & Transitions (Q4 + Q5 + Q8)
+
+Three analyses: off-diagonal cost decomposition, archetype transition paths (continuous interpolation), and P8 crisis retrodiction (progressive state modifier application).
+
+### `src/midrange_analysis.py` — Mid-Range Investigation (Q6)
+
+Tests whether mid-range (35-65% Cap/Ops) is a stable state using archetype coverage analysis and synthetic profiles.
+
+## Key Research Findings
+
+All 10 research questions from `docs/SIMULATION_HANDOFF.md` are answered:
+
+- **Viable zones**: 10.1% (#10 Legacy) to 71.5% (#14 Platform/Internal); 4 correct default failures
+- **Investment dominates** total impact for 14/15 archetypes; #1 Micro Startup uniquely dominated by Overwork
+- **Binding lever != most impactful**: saturated enterprises need Recovery/Overwork, not more Investment
+- **Recovery+Time** is the worst toxic pair (6/15 archetypes, up to -12.2% compounding)
+- **Off-diagonal key**: Time capacity sustains Cap>Ops, Recovery sustains Ops>Cap
+- **P8 crisis retrodiction**: resource erosion on acute crisis is the trigger; Investment=0.80 + D8=3 would have prevented it
+- **Mid-range is universally viable** (15/15 archetypes) but naturally unpopulated — safe harbour, not attractor
 
 ## Key Concepts
 
 ### The Two-Axis Model
-- **Capability axis:** Process maturity, governance, standards, knowledge codification — "what you can do"
-- **Operational axis:** Delivery performance, execution quality, actual outcomes — "what you are doing"
-- These are **independent axes**, not a single dimension. TMMi is capability-biased; DORA is operational-biased. Nobody has formally separated them before.
+- **Capability axis:** Process maturity, governance, standards — "what you can do"
+- **Operational axis:** Delivery performance, execution quality — "what you are doing"
 
-### The Three-Part Success Test
-1. **Viable** — does your grid position cover your stakes? (Two layers: defect consequence + project failure consequence)
-2. **Sustainable** — can you maintain this position without destroying the team?
-3. **Sufficient** — does this position deliver enough for stakeholders?
-
-### The Four Capacity Sliders
-These determine which grid positions are accessible and which failure modes are most likely:
-1. **Investment capacity** — can you afford to move on the grid?
-2. **Recovery capacity** — can you survive if your position bites you?
-3. **Overwork capacity** — can the team compensate through effort?
-4. **Time capacity** — can you afford to be slow?
+### Four Capacity Sliders
+1. **Investment** — can you afford to move on the grid? (dominates sustainability upper bound)
+2. **Recovery** — can you survive failures? (buffers viability floor + sustains Ops>Cap)
+3. **Overwork** — can the team compensate through effort? (buffers sufficiency floor)
+4. **Time** — can you afford to be slow? (sustains Cap>Ops positions)
 
 ### 15 Structural Archetypes
-Project types defined by structural shape (team size, delivery model, process weight, outsourcing level), not industry domain. Medical device / automotive / defence / government are the same archetype (#8 Regulated Stage-Gate) — the domain affects slider values, not the structure.
+Project types defined by structural shape, not industry domain. Each has a dimension profile (D1-D8), default slider values, and a default Cap/Ops position.
 
 ### 8 Project Dimensions
-1. Consequence of failure (inconvenience → life-critical)
-2. Rate of change / market pressure (deliberate → ship-or-die)
-3. System complexity / scale (simple → deeply interconnected)
-4. Regulatory burden (none → existential)
-5. Team stability / knowledge codification (tribal → institutionalised)
-6. Outsourcing dependency (in-house → fully outsourced)
-7. Product lifecycle stage (greenfield → end-of-life)
-8. Organisational coherence (fragmented → unified)
+D1 Consequence, D2 Market Pressure, D3 Complexity, D4 Regulation, D5 Team Stability, D6 Outsourcing, D7 Lifecycle, D8 Coherence. Scale 1-5 each.
+
+## Reference Documents
+
+| File | Purpose |
+|------|---------|
+| `docs/SIMULATION_HANDOFF.md` | **Primary reference** — complete research brief with all variables, archetypes, success function, calibration data |
+| `docs/mira_persona_definitions.md` | 12 persona narratives with validated outcomes |
+| `docs/cross_framework_mapping.yaml` | 15 categories, 35 capabilities, cross-framework mappings |
+| `docs/unified_scoring.yaml` | Scoring thresholds, phase weights, context modifiers |
+| `docs/adaptive_filtering_rules.yaml` | Progressive disclosure rules |
 
 ## Language & Style
+
 - UK English spelling exclusively (visualisation, optimise, colour, etc.)
 - Concise, technical communication
-- This is a research project — acknowledge uncertainty, state assumptions explicitly, distinguish between derived conclusions and working hypotheses
-
-## Research Approach
-- This is exploratory research, not production code
-- Favour clarity of model over implementation elegance
-- Document assumptions and their sensitivity — if an assumption changes, what breaks?
-- Cross-reference against the 12 MIRA personas as calibration data (all 12 have validated outcomes)
-- The MIRA source project is at `C:\Projects\qa-strategy-tool` if deeper reference is needed
+- Research project — acknowledge uncertainty, state assumptions explicitly
