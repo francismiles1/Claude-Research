@@ -660,25 +660,70 @@ def render_cost_breakdown(bd: dict):
     )
     st.plotly_chart(fig, use_container_width=True)
 
-    # Compact cost explanations
-    gap_text = ""
+    # Detailed cost explanations with real-world context
+    # Gap cost
     if bd["gap"] < 0.02:
-        gap_text = "Balanced — no gap penalty."
+        gap_text = "Cap and Ops are balanced — no mismatch penalty."
+    elif bd["gap_direction"] == "Cap > Ops":
+        gap_text = (
+            f"**Cap > Ops by {bd['gap']:.0%}** — you have more governance/process "
+            f"than delivery output. In practice: review cycles with little to review, "
+            f"compliance checkpoints with few deliverables passing through, quality gates "
+            f"that slow work but aren't justified by throughput. "
+            f"**{bd['gap_compensator']}** ({bd['gap_compensator_value']:.2f}) absorbs "
+            f"{'most' if bd['gap_cost'] < 0.05 else 'some'} of this — "
+        )
+        if bd["gap_cost"] < 0.05:
+            gap_text += "the organisation can afford to be slow and thorough."
+        else:
+            gap_text += "but not enough. Need more **Time** (schedule slack) to justify heavy process with low output."
     else:
-        gap_text = f"{bd['gap_direction']} ({bd['gap']:.0%} gap)"
-        if bd["gap_cost"] > 0.05:
-            if bd["gap_direction"] == "Cap > Ops":
-                gap_text += " — need more **Time** to absorb"
-            else:
-                gap_text += " — need more **Recovery/Overwork** to sustain"
+        gap_text = (
+            f"**Ops > Cap by {bd['gap']:.0%}** — you're delivering beyond what your "
+            f"processes support. In practice: shipping without adequate testing, deploying "
+            f"without proper review, making commitments governance can't back up. "
+            f"**{bd['gap_compensator']}** ({bd['gap_compensator_value']:.2f}) absorbs "
+            f"{'most' if bd['gap_cost'] < 0.05 else 'some'} of this — "
+        )
+        if bd["gap_cost"] < 0.05:
+            gap_text += "automation/effort compensates for the process gap."
+        else:
+            gap_text += "but not enough. Need more **Recovery** (automation) or **Overwork** to sustain delivery without process."
 
-    debt_text = "No debt." if bd["debt_cost"] < 0.01 else f"Avg maturity {(bd['cap']+bd['ops'])/2:.0%} < 30% — debt accumulating"
-    proc_text = f"Cap={bd['cap']:.0%} maintenance: {bd['process_cost']:.3f}"
-    if bd["process_cost"] > 0.10:
-        proc_text += " — **increase Investment**"
-    exec_text = f"Ops={bd['ops']:.0%} overhead: {bd['execution_cost']:.3f}"
-    if bd["execution_cost"] > 0.10:
-        exec_text += f" — best lever: **{bd['exec_compensator']}**"
+    # Debt cost
+    avg = (bd["cap"] + bd["ops"]) / 2
+    if bd["debt_cost"] < 0.01:
+        debt_text = "Maturity high enough — no compounding debt."
+    else:
+        debt_text = (
+            f"Average maturity ({avg:.0%}) is below 30%. Technical debt, knowledge gaps, "
+            f"and undocumented decisions are accumulating faster than they're resolved."
+        )
+
+    # Process cost
+    if bd["process_cost"] < 0.03:
+        proc_text = f"Low capability ({bd['cap']:.0%}) means minimal governance overhead."
+    else:
+        proc_text = (
+            f"Maintaining Cap={bd['cap']:.0%} costs {bd['process_cost']:.3f}. "
+            f"This covers: documentation standards, quality gates, review processes, "
+            f"compliance evidence, training. "
+        )
+        if bd["process_cost"] > 0.10:
+            proc_text += "This is significant — **increase Investment** to reduce the burden."
+
+    # Execution cost
+    if bd["execution_cost"] < 0.03:
+        exec_text = f"Low operations ({bd['ops']:.0%}) means minimal delivery overhead."
+    else:
+        exec_text = (
+            f"Sustaining Ops={bd['ops']:.0%} costs {bd['execution_cost']:.3f}. "
+            f"This covers: delivery cadence, deployment pipelines, incident response, "
+            f"monitoring, release management. "
+            f"Best compensator: **{bd['exec_compensator']}** ({bd['exec_compensator_value']:.2f}). "
+        )
+        if bd["execution_cost"] > 0.10:
+            exec_text += f"Consider increasing **{bd['exec_compensator']}** to reduce this."
 
     st.caption(f"**Gap**: {gap_text}")
     st.caption(f"**Debt**: {debt_text}")
