@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Core hypothesis:** Success is not maximum maturity — it is *right-sized* maturity. Every position on the Cap/Ops grid can succeed, but each carries costs that must be absorbable by the organisation.
 
-**Origin:** Derives from the MIRA platform (QA maturity assessment tool combining TMMi, DORA, and ISO 9001). MIRA separates maturity into two independent axes — Capability (what you *can* do) and Operational (what you *are* doing). The MIRA source project is at `C:\Projects\qa-strategy-tool` if deeper reference is needed.
+**Origin:** Derives from the MIRA platform (question-based QA maturity assessment tool). MIRA uses front-loaded project configuration to bias assessment questions, then scores answers into Capability and Operational maturity breakdowns. The cross-framework mappings (TMMi, DORA, ISO 9001) in MIRA are partitioned away from the maturity calculations — this research focuses on the question model, not the framework mappings. The MIRA source project is at `C:\Projects\qa-strategy-tool` if deeper reference is needed.
 
 ## Running the Code
 
@@ -83,6 +83,19 @@ All 10 research questions from `docs/SIMULATION_HANDOFF.md` are answered:
 - **P8 crisis retrodiction**: resource erosion on acute crisis is the trigger; Investment=0.80 + D8=3 would have prevented it
 - **Mid-range is universally viable** (15/15 archetypes) but naturally unpopulated — safe harbour, not attractor
 
+## Known Model Limitations
+
+### Sliders are instantaneous, not time-dependent
+All four capacity sliders (Investment, Recovery, Overwork, Time) are treated as **instantaneous state variables**. Moving Investment from 0.5 to 0.7 takes effect immediately in the model. In reality, resource addition has a lag curve — and sometimes a negative initial effect (Brooks's Law). The model cannot distinguish between:
+
+- Hiring engineers (6-month ramp, possible short-term productivity dip)
+- Engaging specialist consultancy (weeks to value)
+- Buying a platform licence (days to value)
+
+Contract/external resource is the closest real-world analogue to the model's assumption, since it buys pre-formed capacity rather than growing it.
+
+**Implication**: The model answers "what configuration is viable?" (static equilibrium) but not "how long does it take to get there?" or "what happens during the transition?". A future iteration could address this by making sliders time-dependent with characteristic response curves and overshoot/undershoot dynamics — but that would be a dynamic simulation rather than a static equilibrium model.
+
 ## Key Concepts
 
 ### The Two-Axis Model
@@ -107,7 +120,7 @@ D1 Consequence, D2 Market Pressure, D3 Complexity, D4 Regulation, D5 Team Stabil
 |------|---------|
 | `docs/SIMULATION_HANDOFF.md` | **Primary reference** — complete research brief with all variables, archetypes, success function, calibration data |
 | `docs/mira_persona_definitions.md` | 12 persona narratives with validated outcomes |
-| `docs/cross_framework_mapping.yaml` | 15 categories, 35 capabilities, cross-framework mappings |
+| `docs/cross_framework_mapping.yaml` | 15 categories, 35 capabilities — reference only, not used in scoring model |
 | `docs/unified_scoring.yaml` | Scoring thresholds, phase weights, context modifiers |
 | `docs/adaptive_filtering_rules.yaml` | Progressive disclosure rules |
 
