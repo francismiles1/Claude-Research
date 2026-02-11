@@ -415,14 +415,14 @@ def render_sidebar():
     st.sidebar.divider()
     st.sidebar.subheader("View Options")
 
+    layer_options = [GRADIENT_MODE] + list(LAYER_MAP.keys())
     layer = st.sidebar.radio(
         "Display layer",
-        list(LAYER_MAP.keys()) + [GRADIENT_MODE],
+        layer_options,
         key="view_layer",
         horizontal=True,
-        help="Gradient shows smooth margins instead of binary pass/fail. "
-             "Positive = inside viable zone, negative = outside. "
-             "The deeper the green, the better the position.",
+        help="Gradient shows smooth margins (default). "
+             "Others show binary pass/fail for individual tests.",
     )
 
     st.sidebar.divider()
@@ -483,9 +483,21 @@ DIMENSION_LABELS = [
     "Coherence",
 ]
 
+# What each value means at low (1) and high (5)
+DIMENSION_DESCRIPTIONS = {
+    "Consequence":    {1: "Failure is trivial", 2: "Minor impact", 3: "Moderate impact", 4: "Serious impact", 5: "Catastrophic if it fails"},
+    "Market Pressure":{1: "No time pressure", 2: "Relaxed deadlines", 3: "Normal pressure", 4: "Competitive market", 5: "Ship yesterday"},
+    "Complexity":     {1: "Simple system", 2: "Low complexity", 3: "Moderately complex", 4: "Highly complex", 5: "Extreme complexity"},
+    "Regulation":     {1: "No compliance needed", 2: "Light governance", 3: "Moderate regulation", 4: "Heavily regulated", 5: "Strict regulatory regime"},
+    "Team Stability": {1: "High churn, no retention", 2: "Unstable team", 3: "Some stability", 4: "Stable team", 5: "Very stable, low turnover"},
+    "Outsourcing":    {1: "Fully in-house", 2: "Mostly in-house", 3: "Mixed model", 4: "Mostly outsourced", 5: "Fully outsourced"},
+    "Lifecycle":      {1: "Brand new / greenfield", 2: "Early stage", 3: "Mid-lifecycle", 4: "Late stage / ageing", 5: "End of life"},
+    "Coherence":      {1: "Fragmented, no alignment", 2: "Weak coherence", 3: "Moderate coherence", 4: "Well-aligned", 5: "Fully coherent architecture"},
+}
+
 
 def render_dimension_chart(dims: list[int]):
-    """Horizontal bar chart showing the 8 dimension values (1-5)."""
+    """Horizontal bar chart showing the 8 dimension values (1-5) with descriptions."""
     colours = []
     for v in dims:
         if v <= 2:
@@ -494,6 +506,12 @@ def render_dimension_chart(dims: list[int]):
             colours.append("#FFD54F")   # Medium = amber
         else:
             colours.append("#E57373")   # High = red (more demanding)
+
+    # Build hover text with descriptions
+    hover_texts = []
+    for label, v in zip(DIMENSION_LABELS, dims):
+        desc = DIMENSION_DESCRIPTIONS[label].get(v, "")
+        hover_texts.append(f"{label}: {v}/5<br>{desc}")
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
@@ -504,17 +522,28 @@ def render_dimension_chart(dims: list[int]):
         text=[str(v) for v in dims],
         textposition="auto",
         textfont=dict(size=13, color="white"),
+        hovertext=hover_texts,
+        hoverinfo="text",
     ))
     fig.update_layout(
         xaxis=dict(range=[0, 5.5], dtick=1, title="Value (1-5)"),
         yaxis=dict(autorange="reversed"),
-        height=220,
+        height=250,
         margin=dict(l=110, r=10, t=5, b=30),
         plot_bgcolor="#1a1a1a",
         paper_bgcolor="#0e1117",
         font_color="white",
     )
     st.plotly_chart(fig, use_container_width=True)
+
+    # Compact text summary of key dimensions
+    highlights = []
+    for label, v in zip(DIMENSION_LABELS, dims):
+        desc = DIMENSION_DESCRIPTIONS[label].get(v, "")
+        if v <= 2 or v >= 4:  # Only show notable values
+            highlights.append(f"**{label}** ({v}): {desc}")
+    if highlights:
+        st.caption(" | ".join(highlights))
 
 
 def render_cost_breakdown(bd: dict):
