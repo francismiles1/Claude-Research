@@ -19,6 +19,9 @@ import plotly.graph_objects as go
 
 from viable_zones import (
     sweep_grid,
+    sweep_grid_gradient,
+    raw_margins,
+    cost_breakdown,
     test_viable,
     test_sufficient,
     test_sustainable,
@@ -47,6 +50,9 @@ LAYER_MAP = {
     "Sustainable": 2,
 }
 
+# Gradient mode uses a separate grid (raw margins), not an index into the sigmoid grid
+GRADIENT_MODE = "Gradient"
+
 # Custom diverging colourscale: red (fail) -> pale yellow (threshold) -> green (pass)
 ZONE_COLOURSCALE = [
     [0.00, "#8B0000"],   # Dark red — deep failure
@@ -58,6 +64,21 @@ ZONE_COLOURSCALE = [
     [1.00, "#1B5E20"],   # Dark green — strong pass
 ]
 
+# Gradient colourscale: diverging around 0 (the viable boundary)
+# Clipped to [-4, +4] range for display
+GRADIENT_COLOURSCALE = [
+    [0.000, "#8B0000"],   # -4: deep failure
+    [0.125, "#CD5C5C"],   # -3: significant failure
+    [0.250, "#E88060"],   # -2: moderate failure
+    [0.375, "#F0C0A0"],   # -1: marginal failure
+    [0.500, "#FFFFCC"],   # 0: boundary (viable threshold)
+    [0.625, "#C0E8A0"],   # +1: marginally viable
+    [0.750, "#4CAF50"],   # +2: solid
+    [0.875, "#2E7D32"],   # +3: strong
+    [1.000, "#1B5E20"],   # +4: deep sweet spot
+]
+GRADIENT_CLIP = 4.0  # Clip raw margins to [-4, +4] for display
+
 
 # ---------------------------------------------------------------------------
 # Cached computation
@@ -67,6 +88,12 @@ ZONE_COLOURSCALE = [
 def compute_grid(dims_tuple: tuple, sliders_tuple: tuple) -> np.ndarray:
     """Compute the 101x101 grid, cached by (dims, sliders)."""
     return sweep_grid(list(dims_tuple), list(sliders_tuple))
+
+
+@st.cache_data
+def compute_gradient_grid(dims_tuple: tuple, sliders_tuple: tuple) -> np.ndarray:
+    """Compute the 101x101 raw margin grid, cached by (dims, sliders)."""
+    return sweep_grid_gradient(list(dims_tuple), list(sliders_tuple))
 
 
 def compute_zone_metrics(grid: np.ndarray):
@@ -99,11 +126,13 @@ def compute_scores(cap: float, ops: float,
     v = test_viable(cap, ops, dims, sliders)
     s = test_sufficient(cap, ops, dims, sliders)
     u = test_sustainable(cap, ops, dims, sliders)
+    vm, sm, um = raw_margins(cap, ops, dims, sliders)
     return {
         "viable": v,
         "sufficient": s,
         "sustainable": u,
         "combined": min(v, s, u),
+        "margin": min(vm, sm, um),
     }
 
 
@@ -140,49 +169,96 @@ def build_heatmap_figure(
     layer_name: str,
     default_pos: tuple[float, float],
     inspect_pos: tuple[float, float],
+    gradient_grid: np.ndarray | None = None,
+    is_gradient: bool = False,
+    show_floors: bool = False,
+    show_default: bool = False,
 ) -> go.Figure:
     """Build the Plotly heatmap with contour, floor lines, and markers."""
-    data = grid[:, :, layer_idx]
     cap_vals = np.linspace(0, 100, grid.shape[1])
     ops_vals = np.linspace(0, 100, grid.shape[0])
 
-    # Customdata: all 4 scores per cell for hover
-    customdata = np.stack([
-        grid[:, :, 0],
-        grid[:, :, 1],
-        grid[:, :, 2],
-        grid[:, :, 3],
-    ], axis=-1)
-
     fig = go.Figure()
 
-    # 1. Heatmap
-    fig.add_trace(go.Heatmap(
-        z=data,
-        x=cap_vals,
-        y=ops_vals,
-        customdata=customdata,
-        colorscale=ZONE_COLOURSCALE,
-        zmin=0.0,
-        zmax=1.0,
-        colorbar=dict(
-            title=dict(text=f"{layer_name} Score"),
-            tickformat=".2f",
-            len=0.75,
-        ),
-        hovertemplate=(
-            "Cap: %{x:.0f}%<br>"
-            "Ops: %{y:.0f}%<br>"
-            "---<br>"
-            "Viable: %{customdata[0]:.3f}<br>"
-            "Sufficient: %{customdata[1]:.3f}<br>"
-            "Sustainable: %{customdata[2]:.3f}<br>"
-            "Combined: %{customdata[3]:.3f}"
-            "<extra></extra>"
-        ),
-    ))
+    if is_gradient and gradient_grid is not None:
+        # Gradient mode: show raw margins with smooth colour gradient
+        data = np.clip(gradient_grid[:, :, layer_idx], -GRADIENT_CLIP, GRADIENT_CLIP)
+        # Normalise to [0, 1] for the colourscale (0 = -CLIP, 0.5 = 0, 1 = +CLIP)
+        display_data = (data + GRADIENT_CLIP) / (2 * GRADIENT_CLIP)
 
-    # 2. Viable zone contour at 0.5 (always on combined layer)
+        # Customdata: raw margin values for hover
+        customdata = np.stack([
+            gradient_grid[:, :, 0],
+            gradient_grid[:, :, 1],
+            gradient_grid[:, :, 2],
+            gradient_grid[:, :, 3],
+        ], axis=-1)
+
+        fig.add_trace(go.Heatmap(
+            z=display_data,
+            x=cap_vals,
+            y=ops_vals,
+            customdata=customdata,
+            colorscale=GRADIENT_COLOURSCALE,
+            zmin=0.0,
+            zmax=1.0,
+            colorbar=dict(
+                title=dict(text="Margin"),
+                tickvals=[0.0, 0.25, 0.5, 0.75, 1.0],
+                ticktext=[f"{-GRADIENT_CLIP:.0f}", f"{-GRADIENT_CLIP/2:.0f}",
+                          "0", f"+{GRADIENT_CLIP/2:.0f}", f"+{GRADIENT_CLIP:.0f}"],
+                len=0.75,
+            ),
+            hovertemplate=(
+                "Cap: %{x:.0f}%<br>"
+                "Ops: %{y:.0f}%<br>"
+                "---<br>"
+                "Viable margin: %{customdata[0]:+.2f}<br>"
+                "Sufficient margin: %{customdata[1]:+.2f}<br>"
+                "Sustainable margin: %{customdata[2]:+.2f}<br>"
+                "Combined margin: %{customdata[3]:+.2f}<br>"
+                "---<br>"
+                "0 = viable boundary, +ve = inside, -ve = outside"
+                "<extra></extra>"
+            ),
+        ))
+    else:
+        # Standard sigmoid mode
+        data = grid[:, :, layer_idx]
+
+        customdata = np.stack([
+            grid[:, :, 0],
+            grid[:, :, 1],
+            grid[:, :, 2],
+            grid[:, :, 3],
+        ], axis=-1)
+
+        fig.add_trace(go.Heatmap(
+            z=data,
+            x=cap_vals,
+            y=ops_vals,
+            customdata=customdata,
+            colorscale=ZONE_COLOURSCALE,
+            zmin=0.0,
+            zmax=1.0,
+            colorbar=dict(
+                title=dict(text=f"{layer_name} Score"),
+                tickformat=".2f",
+                len=0.75,
+            ),
+            hovertemplate=(
+                "Cap: %{x:.0f}%<br>"
+                "Ops: %{y:.0f}%<br>"
+                "---<br>"
+                "Viable: %{customdata[0]:.3f}<br>"
+                "Sufficient: %{customdata[1]:.3f}<br>"
+                "Sustainable: %{customdata[2]:.3f}<br>"
+                "Combined: %{customdata[3]:.3f}"
+                "<extra></extra>"
+            ),
+        ))
+
+    # Viable zone contour at 0.5 (always from sigmoid grid)
     combined = grid[:, :, 3]
     fig.add_trace(go.Contour(
         z=combined,
@@ -195,41 +271,43 @@ def build_heatmap_figure(
         name="Viable boundary",
     ))
 
-    # 3. Floor lines
-    cap_floor = compute_cap_floor(dims) * 100
-    ops_floor = compute_ops_floor(dims) * 100
-    fig.add_vline(
-        x=cap_floor,
-        line_dash="dot",
-        line_color="rgba(255,255,255,0.6)",
-        annotation_text=f"Cap floor {cap_floor:.0f}%",
-        annotation_font_color="white",
-        annotation_bgcolor="rgba(0,0,0,0.4)",
-    )
-    fig.add_hline(
-        y=ops_floor,
-        line_dash="dot",
-        line_color="rgba(255,255,255,0.6)",
-        annotation_text=f"Ops floor {ops_floor:.0f}%",
-        annotation_font_color="white",
-        annotation_bgcolor="rgba(0,0,0,0.4)",
-    )
+    # 3. Floor lines (optional)
+    if show_floors:
+        cap_floor_pct = compute_cap_floor(dims) * 100
+        ops_floor_pct = compute_ops_floor(dims) * 100
+        fig.add_vline(
+            x=cap_floor_pct,
+            line_dash="dot",
+            line_color="rgba(255,255,255,0.6)",
+            annotation_text=f"Cap floor {cap_floor_pct:.0f}%",
+            annotation_font_color="white",
+            annotation_bgcolor="rgba(0,0,0,0.4)",
+        )
+        fig.add_hline(
+            y=ops_floor_pct,
+            line_dash="dot",
+            line_color="rgba(255,255,255,0.6)",
+            annotation_text=f"Ops floor {ops_floor_pct:.0f}%",
+            annotation_font_color="white",
+            annotation_bgcolor="rgba(0,0,0,0.4)",
+        )
 
-    # 4. Default position marker (star)
-    fig.add_trace(go.Scatter(
-        x=[default_pos[0] * 100],
-        y=[default_pos[1] * 100],
-        mode="markers+text",
-        marker=dict(symbol="star", size=16, color="white",
-                    line=dict(color="black", width=1.5)),
-        text=["Default"],
-        textposition="top center",
-        textfont=dict(color="white", size=11),
-        name="Default position",
-        hovertemplate=(
-            "Default: Cap %{x:.0f}%, Ops %{y:.0f}%<extra></extra>"
-        ),
-    ))
+    # 4. Default position marker (optional)
+    if show_default:
+        fig.add_trace(go.Scatter(
+            x=[default_pos[0] * 100],
+            y=[default_pos[1] * 100],
+            mode="markers+text",
+            marker=dict(symbol="star", size=16, color="white",
+                        line=dict(color="black", width=1.5)),
+            text=["Default"],
+            textposition="top center",
+            textfont=dict(color="white", size=11),
+            name="Default position",
+            hovertemplate=(
+                "Default: Cap %{x:.0f}%, Ops %{y:.0f}%<extra></extra>"
+            ),
+        ))
 
     # 5. Inspected position marker (diamond, only if different)
     insp_cap_pct = inspect_pos[0] * 100
@@ -296,13 +374,6 @@ def render_sidebar():
     dims = ARCHETYPE_DIMENSIONS[archetype]
     default_pos = ARCHETYPE_DEFAULT_POSITIONS[archetype]
 
-    # Dimension profile (read-only)
-    st.sidebar.caption("Dimension profile")
-    dim_text = "  ".join(
-        f"**{DIMENSION_SHORT[i]}**:{dims[i]}" for i in range(8)
-    )
-    st.sidebar.markdown(dim_text)
-
     st.sidebar.divider()
     st.sidebar.subheader("Capacity Sliders")
 
@@ -346,27 +417,21 @@ def render_sidebar():
 
     layer = st.sidebar.radio(
         "Display layer",
-        list(LAYER_MAP.keys()),
+        list(LAYER_MAP.keys()) + [GRADIENT_MODE],
         key="view_layer",
         horizontal=True,
+        help="Gradient shows smooth margins instead of binary pass/fail. "
+             "Positive = inside viable zone, negative = outside. "
+             "The deeper the green, the better the position.",
     )
 
     st.sidebar.divider()
-    st.sidebar.subheader("Inspect Position")
+    show_floors = st.sidebar.checkbox("Show floor lines", value=False,
+                                       help="Cap floor (min viable capability) and Ops floor (min sufficient operations)")
+    show_default = st.sidebar.checkbox("Show default position", value=False,
+                                        help="The archetype's typical real-world Cap/Ops position")
 
-    col1, col2 = st.sidebar.columns(2)
-    with col1:
-        inspect_cap = st.number_input(
-            "Cap", min_value=0.0, max_value=1.0, step=0.01,
-            key="inspect_cap", format="%.2f",
-        )
-    with col2:
-        inspect_ops = st.number_input(
-            "Ops", min_value=0.0, max_value=1.0, step=0.01,
-            key="inspect_ops", format="%.2f",
-        )
-
-    return archetype, dims, sliders, layer, (inspect_cap, inspect_ops), default_pos
+    return archetype, dims, sliders, layer, default_pos, show_floors, show_default
 
 
 def render_score_panel(scores: dict):
@@ -406,6 +471,143 @@ def render_zone_metrics(zone_area: float,
     cols[4].metric("Ops floor", f"{ops_floor:.0%}")
 
 
+# Full dimension labels for the profile chart
+DIMENSION_LABELS = [
+    "Consequence",
+    "Market Pressure",
+    "Complexity",
+    "Regulation",
+    "Team Stability",
+    "Outsourcing",
+    "Lifecycle",
+    "Coherence",
+]
+
+
+def render_dimension_chart(dims: list[int]):
+    """Horizontal bar chart showing the 8 dimension values (1-5)."""
+    colours = []
+    for v in dims:
+        if v <= 2:
+            colours.append("#4CAF50")   # Low = green (less demanding)
+        elif v <= 3:
+            colours.append("#FFD54F")   # Medium = amber
+        else:
+            colours.append("#E57373")   # High = red (more demanding)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        y=DIMENSION_LABELS,
+        x=dims,
+        orientation="h",
+        marker_color=colours,
+        text=[str(v) for v in dims],
+        textposition="auto",
+        textfont=dict(size=13, color="white"),
+    ))
+    fig.update_layout(
+        xaxis=dict(range=[0, 5.5], dtick=1, title="Value (1-5)"),
+        yaxis=dict(autorange="reversed"),
+        height=220,
+        margin=dict(l=110, r=10, t=5, b=30),
+        plot_bgcolor="#1a1a1a",
+        paper_bgcolor="#0e1117",
+        font_color="white",
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
+def render_cost_breakdown(bd: dict):
+    """Display the full cost decomposition for the inspected position."""
+    st.markdown("#### Cost Breakdown")
+
+    # Summary verdict
+    if bd["sustainable"]:
+        st.success(
+            f"Sustainable (headroom: +{bd['headroom']:.3f}). "
+            f"Dominant cost: **{bd['dominant_cost']}** ({bd['dominant_value']:.3f})"
+        )
+    else:
+        st.error(
+            f"Unsustainable (over threshold by {-bd['headroom']:.3f}). "
+            f"Dominant cost: **{bd['dominant_cost']}** ({bd['dominant_value']:.3f})"
+        )
+
+    # Cost bar chart
+    cost_names = ["Gap cost", "Debt cost", "Process cost", "Execution cost"]
+    cost_values = [bd["gap_cost"], bd["debt_cost"],
+                   bd["process_cost"], bd["execution_cost"]]
+
+    fig = go.Figure()
+    colours = ["#E57373" if v > 0.05 else "#A5D6A7" for v in cost_values]
+    fig.add_trace(go.Bar(
+        x=cost_names,
+        y=cost_values,
+        marker_color=colours,
+        text=[f"{v:.3f}" for v in cost_values],
+        textposition="auto",
+    ))
+
+    # Threshold line
+    fig.add_hline(
+        y=bd["threshold"],
+        line_dash="dash",
+        line_color="white",
+        annotation_text=f"Threshold ({bd['threshold']:.2f})",
+        annotation_font_color="white",
+    )
+
+    # Net cost line
+    fig.add_hline(
+        y=bd["net_cost"],
+        line_dash="solid",
+        line_color="#FFD54F",
+        annotation_text=f"Net cost ({bd['net_cost']:.3f})",
+        annotation_font_color="#FFD54F",
+        annotation_position="bottom right",
+    )
+
+    fig.update_layout(
+        yaxis_title="Cost",
+        height=220,
+        margin=dict(l=40, r=20, t=20, b=40),
+        plot_bgcolor="#1a1a1a",
+        paper_bgcolor="#0e1117",
+        font_color="white",
+        yaxis=dict(range=[0, max(0.5, max(cost_values) * 1.2)]),
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Compact cost explanations
+    gap_text = ""
+    if bd["gap"] < 0.02:
+        gap_text = "Balanced — no gap penalty."
+    else:
+        gap_text = f"{bd['gap_direction']} ({bd['gap']:.0%} gap)"
+        if bd["gap_cost"] > 0.05:
+            if bd["gap_direction"] == "Cap > Ops":
+                gap_text += " — need more **Time** to absorb"
+            else:
+                gap_text += " — need more **Recovery/Overwork** to sustain"
+
+    debt_text = "No debt." if bd["debt_cost"] < 0.01 else f"Avg maturity {(bd['cap']+bd['ops'])/2:.0%} < 30% — debt accumulating"
+    proc_text = f"Cap={bd['cap']:.0%} maintenance: {bd['process_cost']:.3f}"
+    if bd["process_cost"] > 0.10:
+        proc_text += " — **increase Investment**"
+    exec_text = f"Ops={bd['ops']:.0%} overhead: {bd['execution_cost']:.3f}"
+    if bd["execution_cost"] > 0.10:
+        exec_text += f" — best lever: **{bd['exec_compensator']}**"
+
+    st.caption(f"**Gap**: {gap_text}")
+    st.caption(f"**Debt**: {debt_text}")
+    st.caption(f"**Process**: {proc_text}")
+    st.caption(f"**Execution**: {exec_text}")
+    st.caption(
+        f"Net: {bd['net_cost']:.3f} vs threshold {bd['threshold']:.2f} "
+        f"(relief: -{bd['investment_relief']:.3f})"
+    )
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -430,12 +632,18 @@ def main():
         st.session_state["inspect_ops"] = ops
 
     # Render sidebar and collect parameters
-    archetype, dims, sliders, layer, inspect_pos, default_pos = render_sidebar()
+    (archetype, dims, sliders, layer, default_pos,
+     show_floors, show_default) = render_sidebar()
 
-    # Compute grid (cached)
+    # Compute grids (cached)
     dims_tuple = tuple(dims)
     sliders_tuple = tuple(round(s, 4) for s in sliders)
     grid = compute_grid(dims_tuple, sliders_tuple)
+
+    # Compute gradient grid (needed for sweet spot finder and gradient view)
+    gradient_grid = compute_gradient_grid(dims_tuple, sliders_tuple)
+
+    is_gradient = (layer == GRADIENT_MODE)
 
     # Zone metrics
     zone_area, cap_range, ops_range = compute_zone_metrics(grid)
@@ -445,26 +653,68 @@ def main():
     # Header
     st.header(f"{archetype} — Viable Zone: {zone_area:.1f}%")
 
-    # Build and display heatmap
-    layer_idx = LAYER_MAP[layer]
-    fig = build_heatmap_figure(
-        grid, dims, layer_idx, layer,
-        default_pos, inspect_pos,
-    )
-    st.plotly_chart(fig, use_container_width=True)
+    # Side-by-side layout: heatmap left, inspect+breakdown right
+    col_map, col_detail = st.columns([3, 2])
 
-    # Score readout at inspected position
-    st.subheader(
-        f"Scores at Cap={inspect_pos[0]:.0%}, Ops={inspect_pos[1]:.0%}"
-    )
-    scores = compute_scores(
-        inspect_pos[0], inspect_pos[1], dims_tuple, sliders_tuple
-    )
-    render_score_panel(scores)
+    with col_detail:
+        # Inspect position controls — prominent, at the top
+        st.markdown("#### Inspect Position")
+        ctrl1, ctrl2 = st.columns(2)
+        with ctrl1:
+            inspect_cap = st.number_input(
+                "Cap %", min_value=0.0, max_value=1.0, step=0.01,
+                key="inspect_cap", format="%.2f",
+            )
+        with ctrl2:
+            inspect_ops = st.number_input(
+                "Ops %", min_value=0.0, max_value=1.0, step=0.01,
+                key="inspect_ops", format="%.2f",
+            )
 
-    # Zone boundary metrics
-    st.divider()
-    render_zone_metrics(zone_area, cap_range, ops_range, cap_floor, ops_floor)
+        # Sweet spot finder button
+        def _find_sweet_spot():
+            combined_margin = gradient_grid[:, :, 3]
+            best_idx = np.unravel_index(np.argmax(combined_margin),
+                                         combined_margin.shape)
+            steps = np.linspace(0.0, 1.0, gradient_grid.shape[0])
+            st.session_state["inspect_cap"] = round(float(steps[best_idx[1]]), 2)
+            st.session_state["inspect_ops"] = round(float(steps[best_idx[0]]), 2)
+
+        st.button("Find sweet spot", on_click=_find_sweet_spot,
+                  help="Jump to the position with the highest combined margin")
+
+        inspect_pos = (inspect_cap, inspect_ops)
+
+        # Compute scores and cost breakdown at inspected position
+        scores = compute_scores(
+            inspect_pos[0], inspect_pos[1], dims_tuple, sliders_tuple
+        )
+        bd = cost_breakdown(inspect_pos[0], inspect_pos[1], dims, sliders)
+
+        st.markdown(
+            f"**Cap={inspect_pos[0]:.0%}, Ops={inspect_pos[1]:.0%}**"
+            f" — Margin: {scores['margin']:+.2f}"
+        )
+        render_score_panel(scores)
+        st.divider()
+        render_cost_breakdown(bd)
+
+    with col_map:
+        # Build heatmap
+        layer_idx = LAYER_MAP.get(layer, 3)
+        fig = build_heatmap_figure(
+            grid, dims, layer_idx, layer,
+            default_pos, inspect_pos,
+            gradient_grid=gradient_grid,
+            is_gradient=is_gradient,
+            show_floors=show_floors,
+            show_default=show_default,
+        )
+        fig.update_layout(height=500)
+        st.plotly_chart(fig, use_container_width=True)
+        render_zone_metrics(zone_area, cap_range, ops_range, cap_floor, ops_floor)
+        st.caption("**Project Dimensions** — what makes this project type demanding")
+        render_dimension_chart(dims)
 
 
 if __name__ == "__main__":

@@ -242,6 +242,151 @@ def combined_score(cap: float, ops: float,
     )
 
 
+def raw_margins(cap: float, ops: float,
+                dims: list[int], sliders: list[float]) -> tuple[float, float, float]:
+    """Pre-sigmoid margins for all three tests.
+
+    Returns the sigmoid input values before squashing. Positive = passing,
+    negative = failing, zero = exactly at threshold. The magnitude tells
+    you how far inside/outside the viable zone the position is.
+
+    Returns: (viable_margin, sufficient_margin, sustainable_margin)
+    """
+    # Viable margin
+    cap_floor = compute_cap_floor(dims)
+    recovery = sliders[1]
+    effective_cap = cap + recovery * 0.15
+    viable_m = (effective_cap - cap_floor) / 0.08
+
+    # Sufficient margin
+    ops_floor = compute_ops_floor(dims)
+    overwork = sliders[2]
+    effective_ops = ops + overwork * 0.15
+    sufficient_m = (effective_ops - ops_floor) / 0.08
+
+    # Sustainable margin (replicate cost arithmetic)
+    investment = sliders[0]
+    time_cap = sliders[3]
+    gap = abs(cap - ops)
+    if cap > ops:
+        gap_cost = gap * (1.0 - time_cap)
+    else:
+        gap_cost = gap * (1.0 - max(overwork, recovery))
+    avg_maturity = (cap + ops) / 2.0
+    debt_cost = max(0.0, 0.30 - avg_maturity) * 2.0
+    process_cost = cap * 0.45 * (1.0 - investment)
+    best_ops_capacity = max(overwork, time_cap, recovery)
+    execution_cost = ops * 0.35 * (1.0 - best_ops_capacity)
+    total_cost = gap_cost + debt_cost + process_cost + execution_cost
+    investment_relief = investment * 0.10
+    sustainable_m = (0.35 - (total_cost - investment_relief)) / 0.08
+
+    return viable_m, sufficient_m, sustainable_m
+
+
+def cost_breakdown(cap: float, ops: float,
+                   dims: list[int], sliders: list[float]) -> dict:
+    """Full cost decomposition at a specific Cap/Ops position.
+
+    Returns a dict with all individual cost components, compensator
+    information, and plain-English explanations of what's driving
+    the result.
+    """
+    investment = sliders[0]
+    recovery = sliders[1]
+    overwork = sliders[2]
+    time_cap = sliders[3]
+
+    # Floors
+    cap_floor = compute_cap_floor(dims)
+    ops_floor = compute_ops_floor(dims)
+    cap_headroom = cap - cap_floor
+    ops_headroom = ops - ops_floor
+
+    # Gap analysis
+    gap = abs(cap - ops)
+    if abs(cap - ops) < 0.02:
+        gap_direction = "Balanced"
+        gap_compensator = "N/A"
+        gap_compensator_value = 0.0
+        gap_cost = 0.0
+    elif cap > ops:
+        gap_direction = "Cap > Ops"
+        gap_compensator = "Time"
+        gap_compensator_value = time_cap
+        gap_cost = gap * (1.0 - time_cap)
+    else:
+        gap_direction = "Ops > Cap"
+        gap_compensator = "Recovery" if recovery >= overwork else "Overwork"
+        gap_compensator_value = max(overwork, recovery)
+        gap_cost = gap * (1.0 - max(overwork, recovery))
+
+    # Debt cost
+    avg_maturity = (cap + ops) / 2.0
+    debt_cost = max(0.0, 0.30 - avg_maturity) * 2.0
+
+    # Process cost
+    process_cost = cap * 0.45 * (1.0 - investment)
+
+    # Execution cost
+    best_ops_capacity = max(overwork, time_cap, recovery)
+    if time_cap >= overwork and time_cap >= recovery:
+        exec_compensator = "Time"
+    elif recovery >= overwork:
+        exec_compensator = "Recovery"
+    else:
+        exec_compensator = "Overwork"
+    execution_cost = ops * 0.35 * (1.0 - best_ops_capacity)
+
+    # Totals
+    total_cost = gap_cost + debt_cost + process_cost + execution_cost
+    investment_relief = investment * 0.10
+    net_cost = total_cost - investment_relief
+    threshold = 0.35
+    headroom = threshold - net_cost
+
+    # Find the dominant cost
+    costs = {
+        "Gap cost": gap_cost,
+        "Debt cost": debt_cost,
+        "Process cost": process_cost,
+        "Execution cost": execution_cost,
+    }
+    dominant = max(costs, key=costs.get)
+
+    return {
+        # Position info
+        "cap": cap,
+        "ops": ops,
+        "gap": gap,
+        "gap_direction": gap_direction,
+        "gap_compensator": gap_compensator,
+        "gap_compensator_value": gap_compensator_value,
+        # Floors
+        "cap_floor": cap_floor,
+        "ops_floor": ops_floor,
+        "cap_headroom": cap_headroom,
+        "ops_headroom": ops_headroom,
+        # Individual costs
+        "gap_cost": gap_cost,
+        "debt_cost": debt_cost,
+        "process_cost": process_cost,
+        "execution_cost": execution_cost,
+        "exec_compensator": exec_compensator,
+        "exec_compensator_value": best_ops_capacity,
+        # Totals
+        "total_cost": total_cost,
+        "investment_relief": investment_relief,
+        "net_cost": net_cost,
+        "threshold": threshold,
+        "headroom": headroom,
+        "sustainable": headroom >= 0,
+        # Dominant cost
+        "dominant_cost": dominant,
+        "dominant_value": costs[dominant],
+    }
+
+
 # ---------------------------------------------------------------------------
 # Grid sweep
 # ---------------------------------------------------------------------------
@@ -271,6 +416,34 @@ def sweep_grid(dims: list[int], sliders: list[float],
             grid[i, j, 1] = s
             grid[i, j, 2] = u
             grid[i, j, 3] = min(v, s, u)
+
+    return grid
+
+
+def sweep_grid_gradient(dims: list[int], sliders: list[float],
+                        resolution: int = GRID_RESOLUTION) -> np.ndarray:
+    """Sweep the Cap/Ops grid and return pre-sigmoid margin values.
+
+    Returns array of shape (resolution, resolution, 4):
+        [:, :, 0] = viable margin
+        [:, :, 1] = sufficient margin
+        [:, :, 2] = sustainable margin
+        [:, :, 3] = combined (min of all three)
+
+    Positive = passing, negative = failing. Magnitude indicates how far
+    inside/outside the viable zone. Gives smooth gradients unlike the
+    binary sigmoid output.
+    """
+    grid = np.zeros((resolution, resolution, 4))
+    steps = np.linspace(0.0, 1.0, resolution)
+
+    for i, ops in enumerate(steps):
+        for j, cap in enumerate(steps):
+            vm, sm, um = raw_margins(cap, ops, dims, sliders)
+            grid[i, j, 0] = vm
+            grid[i, j, 1] = sm
+            grid[i, j, 2] = um
+            grid[i, j, 3] = min(vm, sm, um)
 
     return grid
 
