@@ -103,7 +103,7 @@ export default function ResultsPage() {
 
   // Save practitioner calibration (shared by manual save and auto-save on archetype change)
   const saveCalibration = useCallback(async (trigger, reason) => {
-    if (!consentGiven || !bridgeResult || !defaultSliders || !currentSliders) return
+    if (!bridgeResult || !defaultSliders || !currentSliders) return
     try {
       await api.post('/log/calibration', {
         session_id: sessionId,
@@ -128,7 +128,7 @@ export default function ResultsPage() {
     } catch (err) {
       console.error('Calibration log failed:', err)
     }
-  }, [consentGiven, bridgeResult, defaultSliders, currentSliders, defaultPosition,
+  }, [bridgeResult, defaultSliders, currentSliders, defaultPosition,
       assessedCap, assessedOps, state.inspectCap, state.inspectOps,
       sessionId, assessmentId, contextAnswers, miraAnswers, engineScores])
 
