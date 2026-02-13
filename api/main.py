@@ -25,14 +25,20 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS — allow frontend dev server and production
+# CORS — same-origin in production (Vercel), allow dev servers locally
+import os
+_origins = [
+    "http://localhost:5173",   # Vite dev server
+    "http://localhost:3000",   # Alternative dev
+    "http://127.0.0.1:5173",
+]
+_vercel_url = os.getenv("VERCEL_URL")
+if _vercel_url:
+    _origins.append(f"https://{_vercel_url}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",   # Vite dev server
-        "http://localhost:3000",   # Alternative dev
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
