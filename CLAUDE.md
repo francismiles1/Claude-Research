@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Core hypothesis:** Success is not maximum maturity — it is *right-sized* maturity. Every position on the Cap/Ops grid can succeed, but each carries costs that must be absorbable by the organisation.
 
-**Origin:** Derives from the MIRA platform (question-based QA maturity assessment tool). MIRA uses front-loaded project configuration to bias assessment questions, then scores answers into Capability and Operational maturity breakdowns. The cross-framework mappings (TMMi, DORA, ISO 9001) in MIRA are partitioned away from the maturity calculations — this research focuses on the question model, not the framework mappings. The MIRA source project is at `C:\Projects\qa-strategy-tool` if deeper reference is needed.
+**Origin:** Derives from the MIRA platform (question-based QA maturity assessment tool). MIRA uses front-loaded project configuration to bias assessment questions, then scores answers into Capability and Operational maturity breakdowns. The cross-framework mappings (TMMi, DORA, ISO 9001) in MIRA are partitioned away from the maturity calculations — this research focuses on the question model, not the framework mappings.
 
 ## Running the Code
 
