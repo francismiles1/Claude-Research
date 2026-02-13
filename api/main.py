@@ -61,9 +61,16 @@ async def health():
     sb_err = None
     if has_url and has_key:
         try:
-            from supabase import create_client
-            client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-            client.table("feedback").select("id").limit(1).execute()
+            import httpx
+            resp = httpx.get(
+                f"{os.getenv('SUPABASE_URL')}/rest/v1/feedback?select=id&limit=1",
+                headers={
+                    "apikey": os.getenv("SUPABASE_KEY"),
+                    "Authorization": f"Bearer {os.getenv('SUPABASE_KEY')}",
+                },
+                timeout=5.0,
+            )
+            resp.raise_for_status()
             sb_ok = True
         except Exception as e:
             sb_err = str(e)
