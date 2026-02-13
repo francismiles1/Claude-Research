@@ -40,7 +40,10 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import numpy as np
-from scipy.optimize import minimize
+try:
+    from scipy.optimize import minimize
+except ImportError:
+    minimize = None  # Only needed for calibrate(), not runtime
 
 
 # ---------------------------------------------------------------------------

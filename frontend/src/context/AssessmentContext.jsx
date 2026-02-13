@@ -34,6 +34,9 @@ const initialState = {
   // Per-category notes (categoryId → string)
   categoryNotes: {},
 
+  // Flow type: 'full' (assessment) | 'quick_start' (archetype only)
+  flowType: null,
+
   // Logging
   assessmentId: null,
   maturityLogId: null,
@@ -58,6 +61,7 @@ function reducer(state, action) {
         currentSliders: action.defaultSliders,
         inspectCap: action.defaultPosition[0],
         inspectOps: action.defaultPosition[1],
+        flowType: action.contextAnswers ? 'full' : 'quick_start',
       }
     case 'SET_ANSWER':
       return {

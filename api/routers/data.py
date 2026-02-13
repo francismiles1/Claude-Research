@@ -25,7 +25,7 @@ from dimension_slider_mapping import (
     SLIDER_SHORT,
     DIMENSION_SHORT,
 )
-from lib.components import ARCHETYPE_DESCRIPTIONS, PERSONA_DESCRIPTIONS
+from lib.descriptions import ARCHETYPE_DESCRIPTIONS, PERSONA_DESCRIPTIONS
 from mira_bridge import PERSONA_CONTEXTS, PERSONA_EXPECTED
 from lib.mira_questions import QUESTIONS, CATEGORIES
 
@@ -132,6 +132,7 @@ async def log_assessment(req: LogAssessmentRequest):
         dims = req.bridge_result.get("dimensions", [0] * 8)
         row = {
             "session_id": req.session_id,
+            "flow_type": req.flow_type,
             "archetype": req.bridge_result.get("archetype", "unknown"),
             "match_distance": req.bridge_result.get("match_distance", 0),
             "confidence": req.bridge_result.get("confidence", "unknown"),
@@ -158,6 +159,7 @@ async def log_assessment(req: LogAssessmentRequest):
             "ctx_regulatory": req.context.get("regulatory_standards", []),
             "ctx_audit": req.context.get("audit_frequency", "none"),
             "ctx_has_third_party": req.context.get("has_third_party", False),
+            "has_calibration_changes": req.has_calibration_changes,
         }
         result = client.table("assessments").insert(row).execute()
         row_id = result.data[0]["id"] if result.data else None
@@ -283,6 +285,7 @@ async def log_calibration(req: LogCalibrationRequest):
             "assessment_id": req.assessment_id,
             "archetype": req.archetype,
             "trigger": req.trigger,
+            "flow_type": req.flow_type,
             # Slider data
             "default_inv": round(req.default_sliders[0], 4),
             "default_rec": round(req.default_sliders[1], 4),

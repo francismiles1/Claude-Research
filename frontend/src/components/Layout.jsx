@@ -32,7 +32,7 @@ export default function Layout({ children }) {
     if (idx === 2) return true                      // Assessment — always
     if (idx === 3) return !!state.contextAnswers    // Results — needs full assessment
     if (idx === 4) return !!state.bridgeResult      // Explorer — just needs archetype
-    if (idx === 5) return !!state.contextAnswers    // Feedback — needs full assessment
+    if (idx === 5) return !!state.bridgeResult       // Feedback — needs archetype (any flow)
     return false
   }
 

@@ -33,6 +33,8 @@ export default function IdentifyPage() {
   const [submitted, setSubmitted] = useState(false)
   const [editingNoteCategory, setEditingNoteCategory] = useState(null)
 
+  const isQuickStart = state.flowType === 'quick_start'
+
   // Redirect if no assessment done
   useEffect(() => {
     if (!state.bridgeResult) navigate('/')
@@ -42,6 +44,15 @@ export default function IdentifyPage() {
   useEffect(() => {
     api.get('/meta/archetypes').then(r => setPersonas(r.data.personas || {}))
   }, [])
+
+  // Compute whether calibration changes exist
+  const hasCalibrationChanges = !!(
+    state.currentSliders && state.defaultSliders &&
+    (state.currentSliders.some((v, i) => Math.abs(v - state.defaultSliders[i]) > 0.001) ||
+     (state.inspectCap != null && state.defaultPosition &&
+      (Math.abs(state.inspectCap - state.defaultPosition[0]) > 0.001 ||
+       Math.abs(state.inspectOps - state.defaultPosition[1]) > 0.001)))
+  )
 
   async function handleSubmit() {
     setSubmitting(true)
@@ -57,6 +68,8 @@ export default function IdentifyPage() {
           sliders: state.currentSliders || state.defaultSliders || [],
           cap: state.defaultPosition?.[0] || 0.5,
           ops: state.defaultPosition?.[1] || 0.5,
+          flow_type: state.flowType || 'quick_start',
+          has_calibration_changes: hasCalibrationChanges,
         })
         assessmentId = logRes.data.id
         if (assessmentId) {
@@ -129,21 +142,35 @@ export default function IdentifyPage() {
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-8 space-y-8">
       <div className="space-y-3">
-        <h1 className="text-2xl font-bold">Identify Your Profile</h1>
-        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-          The model was developed using <strong className="text-[var(--text-primary)]">12 reference
-          profiles</strong> — synthetic project descriptions designed to test whether the archetype
-          matching and maturity scoring work correctly. These are not exhaustive — they are validation
-          cases covering a range of project shapes (startup to enterprise, agile to waterfall,
-          regulated to unregulated).
-        </p>
-        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-          The system matched your project to the archetype <strong className="text-[var(--text-primary)]">
-          {state.bridgeResult?.archetype || 'unknown'}</strong>. Below, you can tell us whether any
-          of the reference profiles resemble your real project — or describe something new.
-          <strong className="text-[var(--text-primary)]"> If none match, that is valuable data</strong> — it
-          tells us the model's coverage has gaps.
-        </p>
+        <h1 className="text-2xl font-bold">
+          {isQuickStart ? 'Submit Feedback' : 'Identify Your Profile'}
+        </h1>
+        {isQuickStart ? (
+          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+            You explored the <strong className="text-[var(--text-primary)]">
+            {state.bridgeResult?.archetype || 'unknown'}</strong> archetype via quick-start.
+            Any slider adjustments you made on the Explorer are saved as calibration data
+            — this helps us tune the model against real-world experience. You can also
+            leave general feedback below.
+          </p>
+        ) : (
+          <>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+              The model was developed using <strong className="text-[var(--text-primary)]">12 reference
+              profiles</strong> — synthetic project descriptions designed to test whether the archetype
+              matching and maturity scoring work correctly. These are not exhaustive — they are validation
+              cases covering a range of project shapes (startup to enterprise, agile to waterfall,
+              regulated to unregulated).
+            </p>
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
+              The system matched your project to the archetype <strong className="text-[var(--text-primary)]">
+              {state.bridgeResult?.archetype || 'unknown'}</strong>. Below, you can tell us whether any
+              of the reference profiles resemble your real project — or describe something new.
+              <strong className="text-[var(--text-primary)]"> If none match, that is valuable data</strong> — it
+              tells us the model's coverage has gaps.
+            </p>
+          </>
+        )}
       </div>
 
       {/* Identification type selection */}
@@ -251,62 +278,66 @@ export default function IdentifyPage() {
         </div>
       )}
 
-      {/* Assessment notes review */}
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-[var(--text-secondary)]">
-          Your Assessment Notes
-        </h2>
-        {Object.keys(state.categoryNotes).length > 0 ? (
-          <div className="space-y-2">
-            {Object.entries(state.categoryNotes).map(([catId, note]) => (
-              <div
-                key={catId}
-                className="flex items-start gap-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg px-4 py-3"
-              >
-                <MessageSquare className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">
-                    {catId.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}
-                  </p>
-                  <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">{note}</p>
-                </div>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => setEditingNoteCategory(catId)}
-                    className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
-                    title="Edit note"
+      {/* Assessment notes review — full assessment only */}
+      {!isQuickStart && (
+        <>
+          <div className="space-y-3">
+            <h2 className="text-sm font-semibold text-[var(--text-secondary)]">
+              Your Assessment Notes
+            </h2>
+            {Object.keys(state.categoryNotes).length > 0 ? (
+              <div className="space-y-2">
+                {Object.entries(state.categoryNotes).map(([catId, note]) => (
+                  <div
+                    key={catId}
+                    className="flex items-start gap-3 bg-[var(--bg-card)] border border-[var(--border)] rounded-lg px-4 py-3"
                   >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                  <button
-                    onClick={() => dispatch({ type: 'SET_CATEGORY_NOTE', categoryId: catId, note: '' })}
-                    className="p-1 rounded text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-hover)] transition-colors"
-                    title="Delete note"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                    <MessageSquare className="w-4 h-4 text-[var(--accent)] mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-[var(--text-secondary)] mb-1">
+                        {catId.split('_').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')}
+                      </p>
+                      <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">{note}</p>
+                    </div>
+                    <div className="flex gap-1 shrink-0">
+                      <button
+                        onClick={() => setEditingNoteCategory(catId)}
+                        className="p-1 rounded text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-colors"
+                        title="Edit note"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => dispatch({ type: 'SET_CATEGORY_NOTE', categoryId: catId, note: '' })}
+                        className="p-1 rounded text-[var(--text-muted)] hover:text-red-400 hover:bg-[var(--bg-hover)] transition-colors"
+                        title="Delete note"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              <p className="text-xs text-[var(--text-muted)] italic">
+                No category notes added during the assessment.
+              </p>
+            )}
           </div>
-        ) : (
-          <p className="text-xs text-[var(--text-muted)] italic">
-            No category notes added during the assessment.
-          </p>
-        )}
-      </div>
 
-      {/* Note edit modal */}
-      <NoteModal
-        isOpen={!!editingNoteCategory}
-        onClose={() => setEditingNoteCategory(null)}
-        onSave={note => {
-          dispatch({ type: 'SET_CATEGORY_NOTE', categoryId: editingNoteCategory, note })
-          setEditingNoteCategory(null)
-        }}
-        categoryName={editingNoteCategory || ''}
-        initialValue={editingNoteCategory ? (state.categoryNotes[editingNoteCategory] || '') : ''}
-      />
+          {/* Note edit modal */}
+          <NoteModal
+            isOpen={!!editingNoteCategory}
+            onClose={() => setEditingNoteCategory(null)}
+            onSave={note => {
+              dispatch({ type: 'SET_CATEGORY_NOTE', categoryId: editingNoteCategory, note })
+              setEditingNoteCategory(null)
+            }}
+            categoryName={editingNoteCategory || ''}
+            initialValue={editingNoteCategory ? (state.categoryNotes[editingNoteCategory] || '') : ''}
+          />
+        </>
+      )}
 
       {/* Feedback section */}
       <div className="space-y-4">
@@ -317,7 +348,7 @@ export default function IdentifyPage() {
         {/* Star rating */}
         <div className="space-y-1">
           <label className="text-xs text-[var(--text-muted)]">
-            How useful was this assessment?
+            {isQuickStart ? 'How useful was this tool?' : 'How useful was this assessment?'}
           </label>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map(n => (

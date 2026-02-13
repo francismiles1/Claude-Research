@@ -110,6 +110,7 @@ export default function ResultsPage() {
         assessment_id: assessmentId || null,
         archetype: bridgeResult.archetype,
         trigger,
+        flow_type: state.flowType || 'quick_start',
         default_sliders: defaultSliders,
         current_sliders: currentSliders,
         default_cap: defaultPosition[0],
@@ -356,7 +357,7 @@ export default function ResultsPage() {
                     <strong className="text-[var(--text-primary)]">Save Practitioner Calibration</strong> — your
                     slider adjustments help calibrate the model against real-world experience.
                     {!consentGiven && (
-                      <span className="text-[var(--text-muted)]"> (No data will be recorded without consent.)</span>
+                      <span className="text-[var(--text-muted)]"> (Saved when you submit on the Feedback page.)</span>
                     )}
                   </p>
                   <div className="flex items-center gap-3">

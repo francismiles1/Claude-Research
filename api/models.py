@@ -121,6 +121,8 @@ class LogAssessmentRequest(BaseModel):
     ops: float = 0.0
     assessed_cap: float | None = None
     assessed_ops: float | None = None
+    flow_type: str = Field("full", description="full | quick_start")
+    has_calibration_changes: bool = False
 
 
 class LogIdentifyRequest(BaseModel):
@@ -169,6 +171,7 @@ class LogCalibrationRequest(BaseModel):
     assessment_id: str | None = None
     archetype: str
     trigger: str = Field(..., description="manual | archetype_change")
+    flow_type: str = Field("quick_start", description="full | quick_start")
     default_sliders: list[float] = Field(..., min_length=4, max_length=4)
     current_sliders: list[float] = Field(..., min_length=4, max_length=4)
     default_cap: float
