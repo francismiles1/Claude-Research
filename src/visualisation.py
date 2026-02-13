@@ -13,6 +13,8 @@ Depends on: viable_zones.py, dimension_slider_mapping.py
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import streamlit as st
 import plotly.graph_objects as go
@@ -37,6 +39,7 @@ from dimension_slider_mapping import (
     SLIDER_SHORT,
     DIMENSION_SHORT,
 )
+from mira_bridge import bridge_mira_to_simulation, PERSONA_CONTEXTS, PERSONA_EXPECTED
 
 
 # ---------------------------------------------------------------------------
@@ -355,6 +358,115 @@ def build_heatmap_figure(
 # UI components
 # ---------------------------------------------------------------------------
 
+_SCALE_OPTIONS = ["small", "medium", "large", "enterprise"]
+_DELIVERY_OPTIONS = ["agile", "devops", "waterfall", "v_model", "hybrid_agile", "hybrid_traditional"]
+_STAGE_OPTIONS = ["startup", "growth", "mature", "legacy"]
+_PHASE_OPTIONS = [
+    "initiation", "planning", "early_dev", "mid_dev", "execution",
+    "testing_phase", "maturation", "transition", "closure", "maintenance",
+]
+_REGULATORY_OPTIONS = [
+    "gdpr", "hipaa", "sox", "pci_dss", "iso_27001", "iso_9001_certified",
+    "fda_21_cfr_11", "iso_13485", "iso_26262", "iec_62443", "aspice", "fedramp", "other",
+]
+
+# Persona short descriptions for the selector
+_PERSONA_DESCRIPTIONS = {
+    "P1 Startup Chaos": "Small agile startup, no regulation, mid-development",
+    "P2 Small Agile Team": "Small agile team in testing phase",
+    "P3 Government Waterfall": "Large government, ISO 27001, waterfall, transition",
+    "P4 Enterprise Financial": "Enterprise, SOX compliance, hybrid agile",
+    "P5 Medical Device": "Medium, FDA regulated, hybrid traditional, testing",
+    "P6 Failing Automation": "Medium growth team, struggling with automation",
+    "P7 Cloud-Native": "Medium DevOps startup, early development",
+    "P8 Late-Stage UAT Crisis": "Large project in closure, crisis state",
+    "P9 Planning Phase": "Medium team in planning, pre-delivery",
+    "P10 Golden Enterprise": "Enterprise DevOps, ISO 9001, mature, best-in-class",
+    "P11 Automotive Embedded": "Enterprise, IEC 62443, hybrid traditional, testing",
+    "P12 Legacy Modernisation": "Medium legacy system, waterfall, maintenance",
+}
+
+
+def _render_mira_import():
+    """Render MIRA Import form in sidebar. Returns bridge result."""
+    # Persona selector — pre-loads validated configurations
+    persona_names = ["Custom"] + list(PERSONA_CONTEXTS.keys())
+    persona = st.sidebar.selectbox(
+        "Load persona",
+        persona_names,
+        key="mira_persona",
+        help="Select a validated MIRA persona to pre-load its full context, "
+             "or choose Custom to enter your own.",
+    )
+
+    if persona != "Custom":
+        # Show persona description
+        desc = _PERSONA_DESCRIPTIONS.get(persona, "")
+        expected = PERSONA_EXPECTED.get(persona, [])
+        st.sidebar.caption(f"{desc}")
+        st.sidebar.caption(f"Expected archetype: {', '.join(expected)}")
+
+        # Use the full persona data (context + answers + scores)
+        return bridge_mira_to_simulation(PERSONA_CONTEXTS[persona])
+
+    # Custom mode — manual entry
+    st.sidebar.subheader("Describe Your Project")
+    st.sidebar.caption(
+        "Answer 6 questions about your project context. "
+        "The tool will auto-select the closest archetype."
+    )
+
+    scale = st.sidebar.selectbox(
+        "Organisation scale", _SCALE_OPTIONS, index=1, key="mira_scale",
+        help="small (<10 devs), medium (10-50), large (50-200), enterprise (200+)",
+    )
+    delivery = st.sidebar.selectbox(
+        "Delivery model", _DELIVERY_OPTIONS, index=0, key="mira_delivery",
+    )
+    stage = st.sidebar.selectbox(
+        "Product stage", _STAGE_OPTIONS, index=1, key="mira_stage",
+    )
+    phase = st.sidebar.selectbox(
+        "Project phase", _PHASE_OPTIONS, index=4, key="mira_phase",
+    )
+    regulatory = st.sidebar.multiselect(
+        "Regulatory standards", _REGULATORY_OPTIONS, default=[], key="mira_regulatory",
+    )
+    audit = st.sidebar.selectbox(
+        "Audit frequency",
+        ["none", "annual", "bi_annual", "quarterly", "continuous"],
+        index=0, key="mira_audit",
+    )
+
+    mira_data = {
+        "context": {
+            "scale": scale,
+            "delivery_model": delivery,
+            "product_stage": stage,
+            "project_phase": phase,
+            "regulatory_standards": regulatory,
+            "audit_frequency": audit,
+        },
+    }
+
+    # Optional JSON paste for full MIRA output (includes scores + answers)
+    with st.sidebar.expander("Advanced: paste MIRA JSON"):
+        json_text = st.text_area("MIRA output JSON", height=120, key="mira_json")
+        if json_text.strip():
+            try:
+                parsed = json.loads(json_text)
+                if "context" in parsed:
+                    mira_data["context"].update(parsed["context"])
+                if "scores" in parsed:
+                    mira_data["scores"] = parsed["scores"]
+                if "answers" in parsed:
+                    mira_data["answers"] = parsed["answers"]
+            except json.JSONDecodeError:
+                st.sidebar.error("Invalid JSON")
+
+    return bridge_mira_to_simulation(mira_data)
+
+
 def render_sidebar():
     """Render all sidebar controls. Returns current parameters."""
     st.sidebar.title("Viable Zone Explorer")
@@ -363,16 +475,71 @@ def render_sidebar():
         "Adjust sliders to see the viable zone change in real-time."
     )
 
-    # Archetype selector
-    archetype = st.sidebar.selectbox(
-        "Project archetype",
-        options=ARCHETYPE_ORDER,
-        key="archetype",
-        on_change=_sync_archetype_change,
+    # Input mode toggle
+    input_mode = st.sidebar.radio(
+        "Input mode",
+        ["Archetype Selector", "MIRA Import"],
+        key="input_mode",
+        horizontal=True,
+        help="Choose an archetype manually, or describe your project and let the tool select one.",
     )
 
-    dims = ARCHETYPE_DIMENSIONS[archetype]
-    default_pos = ARCHETYPE_DEFAULT_POSITIONS[archetype]
+    mira_result = None  # Set if MIRA Import mode is used
+
+    if input_mode == "MIRA Import":
+        mira_result = _render_mira_import()
+        archetype = mira_result["archetype"]
+
+        # Apply bridge result to session state on first derivation or change
+        prev_mira = st.session_state.get("prev_mira_archetype", None)
+        if archetype != prev_mira:
+            defaults = ARCHETYPE_SLIDER_DEFAULTS[archetype]
+            st.session_state["slider_inv"] = defaults[0]
+            st.session_state["slider_rec"] = defaults[1]
+            st.session_state["slider_owk"] = defaults[2]
+            st.session_state["slider_time"] = defaults[3]
+            # Pre-load Cap/Ops from MIRA scores if available
+            if "cap" in mira_result:
+                st.session_state["inspect_cap"] = round(mira_result["cap"], 2)
+            else:
+                cap, ops = ARCHETYPE_DEFAULT_POSITIONS[archetype]
+                st.session_state["inspect_cap"] = cap
+            if "ops" in mira_result:
+                st.session_state["inspect_ops"] = round(mira_result["ops"], 2)
+            else:
+                cap, ops = ARCHETYPE_DEFAULT_POSITIONS[archetype]
+                st.session_state["inspect_ops"] = ops
+            st.session_state["prev_mira_archetype"] = archetype
+
+        dims = mira_result["dimensions"]
+        default_pos = ARCHETYPE_DEFAULT_POSITIONS[archetype]
+
+        # Show match result
+        st.sidebar.divider()
+        confidence = mira_result["confidence"]
+        conf_icon = {"strong": "🟢", "reasonable": "🟡", "ambiguous": "🔴"}
+        st.sidebar.markdown(
+            f"{conf_icon.get(confidence, '⚪')} **Matched: {archetype}** "
+            f"(distance: {mira_result['match_distance']:.1f}, {confidence})"
+        )
+        # Show alternatives
+        alts = mira_result["alternatives"]
+        if len(alts) > 1:
+            alt_text = " | ".join(
+                f"{a} ({d:.1f})" for a, d in alts[1:]
+            )
+            st.sidebar.caption(f"Alternatives: {alt_text}")
+
+    else:
+        # Standard archetype selector
+        archetype = st.sidebar.selectbox(
+            "Project archetype",
+            options=ARCHETYPE_ORDER,
+            key="archetype",
+            on_change=_sync_archetype_change,
+        )
+        dims = ARCHETYPE_DIMENSIONS[archetype]
+        default_pos = ARCHETYPE_DEFAULT_POSITIONS[archetype]
 
     st.sidebar.divider()
     st.sidebar.subheader("Capacity Sliders")
@@ -404,7 +571,9 @@ def render_sidebar():
 
     # Reset button — uses callback so state is set before widgets render
     def _reset_sliders():
-        defs = ARCHETYPE_SLIDER_DEFAULTS[st.session_state["archetype"]]
+        defs = ARCHETYPE_SLIDER_DEFAULTS[
+            st.session_state.get("archetype", ARCHETYPE_ORDER[0])
+        ]
         st.session_state["slider_inv"] = defs[0]
         st.session_state["slider_rec"] = defs[1]
         st.session_state["slider_owk"] = defs[2]
@@ -431,7 +600,15 @@ def render_sidebar():
     show_default = st.sidebar.checkbox("Show default position", value=False,
                                         help="The archetype's typical real-world Cap/Ops position")
 
-    return archetype, dims, sliders, layer, default_pos, show_floors, show_default
+    # Track selected persona for correlation table highlighting
+    selected_persona = None
+    if input_mode == "MIRA Import":
+        selected_persona = st.session_state.get("mira_persona", "Custom")
+        if selected_persona == "Custom":
+            selected_persona = None
+
+    return (archetype, dims, sliders, layer, default_pos,
+            show_floors, show_default, input_mode, selected_persona)
 
 
 def render_score_panel(scores: dict):
@@ -599,6 +776,97 @@ def render_dimension_chart(dims: list[int]):
     st.markdown("\n\n".join(lines))
 
 
+@st.cache_data
+def compute_persona_correlation() -> list[dict]:
+    """Evaluate all 12 MIRA personas against their matched archetype's viable zone."""
+    rows = []
+    for name, data in PERSONA_CONTEXTS.items():
+        result = bridge_mira_to_simulation(data)
+        arch = result["archetype"]
+        dims = result["dimensions"]
+        sliders = list(ARCHETYPE_SLIDER_DEFAULTS[arch])
+        cap = result.get("cap", 0.5)
+        ops = result.get("ops", 0.5)
+
+        v = test_viable(cap, ops, dims, sliders)
+        s = test_sufficient(cap, ops, dims, sliders)
+        u = test_sustainable(cap, ops, dims, sliders)
+        combined = min(v, s, u)
+
+        # Identify binding constraint
+        scores = {"Viable": v, "Sufficient": s, "Sustainable": u}
+        binding = min(scores, key=scores.get)
+
+        rows.append({
+            "persona": name,
+            "cap": cap,
+            "ops": ops,
+            "archetype": arch,
+            "viable": v,
+            "sufficient": s,
+            "sustainable": u,
+            "combined": combined,
+            "passes": combined >= PASS_THRESHOLD,
+            "binding": binding if combined < PASS_THRESHOLD else "—",
+            "expected": PERSONA_EXPECTED.get(name, []),
+            "confidence": result["confidence"],
+        })
+    return rows
+
+
+def render_persona_correlation(selected_persona: str | None = None):
+    """Display the MIRA persona correlation table."""
+    st.markdown("#### MIRA Persona Correlation")
+    st.caption(
+        "Each persona's MIRA-derived Cap/Ops position evaluated against "
+        "the simulation's viable zone for their matched archetype."
+    )
+
+    rows = compute_persona_correlation()
+
+    # Build markdown table
+    lines = [
+        "| Persona | Cap | Ops | Archetype | Viable | Sufficient | Sustainable | Verdict | Binding |",
+        "|---------|----:|----:|-----------|-------:|-----------:|------------:|---------|---------|",
+    ]
+    for r in rows:
+        verdict = "VIABLE" if r["passes"] else "FAIL"
+        highlight = "**" if r["persona"] == selected_persona else ""
+        lines.append(
+            f"| {highlight}{r['persona']}{highlight} "
+            f"| {r['cap']:.0%} "
+            f"| {r['ops']:.0%} "
+            f"| {r['archetype']} "
+            f"| {r['viable']:.3f} "
+            f"| {r['sufficient']:.3f} "
+            f"| {r['sustainable']:.3f} "
+            f"| {verdict} "
+            f"| {r['binding']} |"
+        )
+    st.markdown("\n".join(lines))
+
+    # Summary stats
+    passing = sum(1 for r in rows if r["passes"])
+    failing = sum(1 for r in rows if not r["passes"])
+    st.markdown(
+        f"**{passing} viable, {failing} failing** — "
+        f"failures: {', '.join(r['persona'] for r in rows if not r['passes'])}"
+    )
+
+    # Narrative for failures
+    for r in rows:
+        if not r["passes"]:
+            cap_pct = f"{r['cap']:.0%}"
+            ops_pct = f"{r['ops']:.0%}"
+            if r["binding"] == "Viable":
+                reason = f"Cap at {cap_pct} is below the viability floor — insufficient process capability."
+            elif r["binding"] == "Sufficient":
+                reason = f"Ops at {ops_pct} is below the sufficiency floor — not enough delivery output."
+            else:
+                reason = f"Position ({cap_pct}/{ops_pct}) exceeds sustainable cost threshold."
+            st.caption(f"**{r['persona']}**: {reason}")
+
+
 def render_cost_breakdown(bd: dict):
     """Display the full cost decomposition for the inspected position."""
     st.markdown("#### Cost Breakdown")
@@ -760,7 +1028,7 @@ def main():
 
     # Render sidebar and collect parameters
     (archetype, dims, sliders, layer, default_pos,
-     show_floors, show_default) = render_sidebar()
+     show_floors, show_default, input_mode, selected_persona) = render_sidebar()
 
     # Compute grids (cached)
     dims_tuple = tuple(dims)
@@ -843,6 +1111,11 @@ def main():
         render_zone_metrics(zone_area, cap_range, ops_range, cap_floor, ops_floor)
         st.caption("**Project Dimensions** — what makes this project type demanding")
         render_dimension_chart(dims)
+
+    # Persona correlation table — shown in MIRA Import mode
+    if input_mode == "MIRA Import":
+        st.divider()
+        render_persona_correlation(selected_persona)
 
 
 if __name__ == "__main__":
