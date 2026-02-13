@@ -53,31 +53,4 @@ app.include_router(data.router, prefix="/api")
 
 @app.get("/api/health")
 async def health():
-    """Health check with Supabase connection diagnostic."""
-    import os
-    has_url = bool(os.getenv("SUPABASE_URL"))
-    has_key = bool(os.getenv("SUPABASE_KEY"))
-    sb_ok = False
-    sb_err = None
-    if has_url and has_key:
-        try:
-            import httpx
-            resp = httpx.get(
-                f"{os.getenv('SUPABASE_URL')}/rest/v1/feedback?select=id&limit=1",
-                headers={
-                    "apikey": os.getenv("SUPABASE_KEY"),
-                    "Authorization": f"Bearer {os.getenv('SUPABASE_KEY')}",
-                },
-                timeout=5.0,
-            )
-            resp.raise_for_status()
-            sb_ok = True
-        except Exception as e:
-            sb_err = str(e)
-    return {
-        "status": "ok",
-        "supabase_url_set": has_url,
-        "supabase_key_set": has_key,
-        "supabase_connected": sb_ok,
-        "supabase_error": sb_err,
-    }
+    return {"status": "ok"}
