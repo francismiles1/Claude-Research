@@ -7,7 +7,7 @@
  *
  * Designed to eliminate anchoring bias: distances hidden until after selection.
  */
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowRight, ChevronDown, HelpCircle } from 'lucide-react'
 import api from '../api/client'
@@ -21,15 +21,13 @@ export default function ComparisonPage() {
   const state = useAssessment()
   const dispatch = useAssessmentDispatch()
 
-  const { bridgeResult, engineScores, defaultSliders, defaultPosition } = state
+  const { bridgeResult, engineScores } = state
 
   const [archetypes, setArchetypes] = useState(null)
   const [phase, setPhase] = useState(1)
   const [userChoice, setUserChoice] = useState(null)       // archetype name or null
   const [noneMatch, setNoneMatch] = useState(false)
   const [noneMatchDesc, setNoneMatchDesc] = useState('')
-
-  const loggedRef = useRef(false)
 
   // Redirect if no assessment
   useEffect(() => { if (!bridgeResult) navigate('/') }, [bridgeResult, navigate])
@@ -43,6 +41,7 @@ export default function ComparisonPage() {
   function handleSelectArchetype(name) {
     setUserChoice(name)
     setNoneMatch(false)
+    dispatch({ type: 'SET_SELF_MAP', choice: name, noneMatch: false, noneMatchDesc: '' })
     setPhase(3)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -51,71 +50,10 @@ export default function ComparisonPage() {
     setUserChoice(null)
     setNoneMatch(true)
     setNoneMatchDesc(description)
+    dispatch({ type: 'SET_SELF_MAP', choice: null, noneMatch: true, noneMatchDesc: description })
     setPhase(3)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
-
-  // ── Phase 3: Logging ──────────────────────────────────────────────
-  useEffect(() => {
-    if (phase !== 3 || loggedRef.current || !state.consentGiven || !bridgeResult) return
-    loggedRef.current = true
-
-    async function logAll() {
-      try {
-        // 1. Log assessment (context + archetype)
-        let assessmentId = state.assessmentId
-        if (!assessmentId) {
-          const assessRes = await api.post('/log/assessment', {
-            session_id: state.sessionId,
-            bridge_result: bridgeResult,
-            context: state.contextAnswers || {},
-            sliders: defaultSliders || [],
-            cap: defaultPosition?.[0] || 0.5,
-            ops: defaultPosition?.[1] || 0.5,
-            assessed_cap: engineScores?.capability_pct != null
-              ? engineScores.capability_pct / 100 : null,
-            assessed_ops: engineScores?.operational_pct != null
-              ? engineScores.operational_pct / 100 : null,
-          })
-          assessmentId = assessRes.data.id
-          if (assessmentId) {
-            dispatch({ type: 'SET_ASSESSMENT_ID', id: assessmentId })
-          }
-        }
-
-        // 2. Log maturity answers (if any)
-        if (Object.keys(state.miraAnswers).length > 0) {
-          await api.post('/log/maturity', {
-            session_id: state.sessionId,
-            assessment_id: assessmentId,
-            answers: state.miraAnswers,
-            capability_pct: engineScores?.capability_pct || 0,
-            operational_pct: engineScores?.operational_pct || 0,
-            unified_pct: engineScores?.unified_pct || 0,
-            category_scores: engineScores?.category_scores || {},
-            questions_answered: engineScores?.questions_answered || 0,
-            questions_visible: engineScores?.questions_visible || 0,
-          })
-        }
-
-        // 3. Log self-mapping choice
-        await api.post('/log/self_map', {
-          session_id: state.sessionId,
-          assessment_id: assessmentId,
-          user_choice: userChoice,
-          user_says_none_match: noneMatch,
-          none_match_description: noneMatchDesc,
-          system_match: bridgeResult.archetype,
-          system_distance: bridgeResult.match_distance || 0,
-          system_confidence: bridgeResult.confidence || '',
-        })
-      } catch (err) {
-        console.error('Comparison logging failed:', err)
-      }
-    }
-
-    logAll()
-  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!bridgeResult) return null
 
@@ -141,7 +79,7 @@ export default function ComparisonPage() {
           {/* Navigation */}
           <div className="flex items-center justify-between pt-4 border-t border-[var(--border)]">
             <button
-              onClick={() => { setPhase(2); setUserChoice(null); setNoneMatch(false); loggedRef.current = false }}
+              onClick={() => { setPhase(2); setUserChoice(null); setNoneMatch(false) }}
               className="px-4 py-2 text-sm text-[var(--text-muted)] border border-[var(--border)] rounded-md hover:bg-[var(--bg-hover)] transition-colors"
             >
               Change selection

@@ -68,6 +68,10 @@ export default function IdentifyPage() {
           sliders: state.currentSliders || state.defaultSliders || [],
           cap: state.defaultPosition?.[0] || 0.5,
           ops: state.defaultPosition?.[1] || 0.5,
+          assessed_cap: state.engineScores?.capability_pct != null
+            ? state.engineScores.capability_pct / 100 : null,
+          assessed_ops: state.engineScores?.operational_pct != null
+            ? state.engineScores.operational_pct / 100 : null,
           flow_type: state.flowType || 'quick_start',
           has_calibration_changes: hasCalibrationChanges,
         })
@@ -85,6 +89,35 @@ export default function IdentifyPage() {
           id_type: idType,
           persona_name: idType === 'existing_persona' ? selectedPersona : null,
           new_persona: idType === 'new_persona' ? newPersona : null,
+        })
+      }
+
+      // Log maturity answers (if any)
+      if (Object.keys(state.miraAnswers).length > 0) {
+        await api.post('/log/maturity', {
+          session_id: state.sessionId,
+          assessment_id: assessmentId,
+          answers: state.miraAnswers,
+          capability_pct: state.engineScores?.capability_pct || 0,
+          operational_pct: state.engineScores?.operational_pct || 0,
+          unified_pct: state.engineScores?.unified_pct || 0,
+          category_scores: state.engineScores?.category_scores || {},
+          questions_answered: state.engineScores?.questions_answered || 0,
+          questions_visible: state.engineScores?.questions_visible || 0,
+        })
+      }
+
+      // Log self-mapping choice (if user went through comparison)
+      if (state.selfMapChoice || state.selfMapNoneMatch) {
+        await api.post('/log/self_map', {
+          session_id: state.sessionId,
+          assessment_id: assessmentId,
+          user_choice: state.selfMapChoice,
+          user_says_none_match: state.selfMapNoneMatch,
+          none_match_description: state.selfMapNoneMatchDesc,
+          system_match: state.bridgeResult?.archetype || '',
+          system_distance: state.bridgeResult?.match_distance || 0,
+          system_confidence: state.bridgeResult?.confidence || '',
         })
       }
 

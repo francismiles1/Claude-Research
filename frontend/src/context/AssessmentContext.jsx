@@ -41,6 +41,8 @@ const initialState = {
   assessmentId: null,
   maturityLogId: null,
   selfMapChoice: null,
+  selfMapNoneMatch: false,
+  selfMapNoneMatchDesc: '',
 }
 
 function reducer(state, action) {
@@ -84,7 +86,12 @@ function reducer(state, action) {
     case 'SET_MATURITY_LOG_ID':
       return { ...state, maturityLogId: action.id }
     case 'SET_SELF_MAP':
-      return { ...state, selfMapChoice: action.choice }
+      return {
+        ...state,
+        selfMapChoice: action.choice,
+        selfMapNoneMatch: action.noneMatch || false,
+        selfMapNoneMatchDesc: action.noneMatchDesc || '',
+      }
     case 'SET_CATEGORY_NOTE': {
       const notes = { ...state.categoryNotes }
       if (action.note && action.note.trim()) {
