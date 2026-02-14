@@ -37,6 +37,7 @@ async def get_visible(req: VisibleRequest):
         # Collect all questions in this category
         for qlist in ("capability_questions", "operational_questions",
                       "conditional_questions", "branch_questions"):
+            is_adaptive = qlist in ("conditional_questions", "branch_questions")
             for qid in cat.get(qlist, []):
                 if qid not in visible_set:
                     continue
@@ -63,6 +64,7 @@ async def get_visible(req: VisibleRequest):
                     "inverse": q.get("inverse", False),
                     "scoring_order": q.get("scoring_order", "ascending"),
                     "answered": is_answered,
+                    "adaptive": is_adaptive,
                 })
 
         if cat_questions:

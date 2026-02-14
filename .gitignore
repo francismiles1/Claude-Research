@@ -14,6 +14,9 @@ src/.streamlit/
 .env
 .env.*
 
+# Exported research data (contains Supabase data)
+data/exports/
+
 # Scratch/temp files
 nul
 check_grid.py

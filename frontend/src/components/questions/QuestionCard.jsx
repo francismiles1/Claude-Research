@@ -4,7 +4,7 @@
  * Hover-to-expand shows contextual help text when available.
  */
 import { useState } from 'react'
-import { CheckCircle } from 'lucide-react'
+import { CheckCircle, GitBranch } from 'lucide-react'
 import ToggleInput from './ToggleInput'
 import SelectInput from './SelectInput'
 import SliderInput from './SliderInput'
@@ -69,13 +69,20 @@ export default function QuestionCard({ question, value, onChange }) {
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-start justify-between gap-2">
           <p className={`text-sm text-[var(--text-primary)]${question.help ? ' cursor-help' : ''}`}>{question.text}</p>
-          <span className={`flex-shrink-0 text-xs px-1.5 py-0.5 rounded ${
-            question.dimension === 'capability'
-              ? 'bg-blue-900/30 text-blue-400'
-              : 'bg-emerald-900/30 text-emerald-400'
-          }`}>
-            {question.dimension === 'capability' ? 'Cap' : 'Ops'}
-          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            {question.adaptive && (
+              <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400" title="Adaptive — may appear or disappear based on other answers">
+                <GitBranch className="w-3 h-3" />
+              </span>
+            )}
+            <span className={`text-xs px-1.5 py-0.5 rounded ${
+              question.dimension === 'capability'
+                ? 'bg-blue-900/30 text-blue-400'
+                : 'bg-emerald-900/30 text-emerald-400'
+            }`}>
+              {question.dimension === 'capability' ? 'Cap' : 'Ops'}
+            </span>
+          </div>
         </div>
         {hovered && question.help && (
           <p className="text-xs text-[var(--text-secondary)] leading-relaxed -mt-1">{question.help}</p>

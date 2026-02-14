@@ -123,6 +123,11 @@ class LogAssessmentRequest(BaseModel):
     assessed_ops: float | None = None
     flow_type: str = Field("full", description="full | quick_start")
     has_calibration_changes: bool = False
+    self_inv: float | None = None
+    self_rec: float | None = None
+    self_owk: float | None = None
+    self_time: float | None = None
+    respondent_role: str | None = None
 
 
 class LogIdentifyRequest(BaseModel):

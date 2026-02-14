@@ -169,6 +169,11 @@ async def log_assessment(req: LogAssessmentRequest):
         "ctx_audit": req.context.get("audit_frequency", "none"),
         "ctx_has_third_party": req.context.get("has_third_party", False),
         "has_calibration_changes": req.has_calibration_changes,
+        "self_inv": req.self_inv,
+        "self_rec": req.self_rec,
+        "self_owk": req.self_owk,
+        "self_time": req.self_time,
+        "respondent_role": req.respondent_role,
     }
     row_id = _supabase_insert("assessments", row)
     return LogResponse(id=row_id)

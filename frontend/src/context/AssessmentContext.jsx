@@ -31,6 +31,10 @@ const initialState = {
   inspectCap: null,
   inspectOps: null,
 
+  // Capacity self-assessment (front-loaded before questions)
+  selfAssessedSliders: null,  // [inv, rec, owk, time] — 0-1 each
+  respondentRole: null,       // string or null
+
   // Per-category notes (categoryId → string)
   categoryNotes: {},
 
@@ -85,6 +89,12 @@ function reducer(state, action) {
       return { ...state, assessmentId: action.id }
     case 'SET_MATURITY_LOG_ID':
       return { ...state, maturityLogId: action.id }
+    case 'SET_SELF_ASSESSMENT':
+      return {
+        ...state,
+        selfAssessedSliders: action.sliders,
+        respondentRole: action.role || null,
+      }
     case 'SET_SELF_MAP':
       return {
         ...state,

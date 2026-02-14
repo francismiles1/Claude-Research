@@ -14,6 +14,7 @@ import { useNavigate } from 'react-router-dom'
 import { User, UserPlus, SkipForward, Send, Star, Loader2, CheckCircle, Pencil, Trash2, MessageSquare, Shield } from 'lucide-react'
 import api from '../api/client'
 import { useAssessment, useAssessmentDispatch } from '../context/AssessmentContext'
+import { MINIMUM_ANSWER_PCT, getAnswerPct } from '../constants'
 import NoteModal from '../components/NoteModal'
 
 
@@ -34,6 +35,13 @@ export default function IdentifyPage() {
   const [editingNoteCategory, setEditingNoteCategory] = useState(null)
 
   const isQuickStart = state.flowType === 'quick_start'
+
+  // Answer sufficiency check — only applies to full assessment flow
+  const answerPct = getAnswerPct(
+    state.engineScores?.questions_answered ?? 0,
+    state.engineScores?.questions_visible ?? 0
+  )
+  const hasSufficientAnswers = isQuickStart || answerPct >= MINIMUM_ANSWER_PCT
 
   // Redirect if no assessment done
   useEffect(() => {
@@ -74,6 +82,11 @@ export default function IdentifyPage() {
             ? state.engineScores.operational_pct / 100 : null,
           flow_type: state.flowType || 'quick_start',
           has_calibration_changes: hasCalibrationChanges,
+          self_inv: state.selfAssessedSliders?.[0] ?? null,
+          self_rec: state.selfAssessedSliders?.[1] ?? null,
+          self_owk: state.selfAssessedSliders?.[2] ?? null,
+          self_time: state.selfAssessedSliders?.[3] ?? null,
+          respondent_role: state.respondentRole || null,
         })
         assessmentId = logRes.data.id
         if (assessmentId) {
@@ -469,7 +482,7 @@ export default function IdentifyPage() {
       </div>
 
       {/* Submit */}
-      {state.consentGiven ? (
+      {state.consentGiven && hasSufficientAnswers ? (
         <button
           onClick={handleSubmit}
           disabled={submitting}
@@ -490,7 +503,12 @@ export default function IdentifyPage() {
             <Send className="w-4 h-4" /> Submit &amp; Finish
           </button>
           <p className="text-xs text-center text-[var(--text-muted)]">
-            Tick the consent checkbox above to submit your responses.
+            {!state.consentGiven && !hasSufficientAnswers
+              ? 'Tick the consent checkbox and answer at least 50% of assessment questions to submit.'
+              : !state.consentGiven
+                ? 'Tick the consent checkbox above to submit your responses.'
+                : `Answer at least 50% of assessment questions to submit (currently ${(answerPct * 100).toFixed(0)}%).`
+            }
           </p>
           <button
             onClick={() => setSubmitted(true)}

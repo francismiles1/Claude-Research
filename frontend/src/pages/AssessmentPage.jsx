@@ -8,6 +8,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CheckCircle, ChevronRight, Loader2, ArrowRight, SkipForward, MessageSquarePlus, MessageSquareText } from 'lucide-react'
 import api from '../api/client'
+import { MINIMUM_ANSWER_PCT, getAnswerPct, answerPctColour } from '../constants'
 import { useAssessment, useAssessmentDispatch } from '../context/AssessmentContext'
 import ContextForm from '../components/ContextForm'
 import QuestionCard from '../components/questions/QuestionCard'
@@ -18,9 +19,14 @@ export default function AssessmentPage() {
   const state = useAssessment()
   const dispatch = useAssessmentDispatch()
 
-  // Phase tracking — need both bridgeResult AND contextAnswers for Phase 2
-  // (quick-start sets bridgeResult but not contextAnswers)
-  const phase = (state.bridgeResult && state.contextAnswers) ? 2 : 1
+  // Phase tracking — 3-phase for full flow:
+  //   1: context form (no bridgeResult or no contextAnswers)
+  //   2: capacity self-assessment (bridgeResult + contextAnswers but no selfAssessedSliders)
+  //   3: maturity questions (all three present)
+  // Quick-start skips phases 1+2 (sets bridgeResult but not contextAnswers)
+  const phase = (!state.bridgeResult || !state.contextAnswers) ? 1
+    : !state.selfAssessedSliders ? 2
+    : 3
 
   // Phase 2 state — initialise from context to survive navigation
   const [categories, setCategories] = useState([])
@@ -28,6 +34,7 @@ export default function AssessmentPage() {
   const [answers, setAnswers] = useState(state.miraAnswers || {})
   const [scores, setScores] = useState(state.engineScores || null)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [scoresLoading, setScoresLoading] = useState(false)
   const [noteModalOpen, setNoteModalOpen] = useState(false)
 
@@ -54,10 +61,11 @@ export default function AssessmentPage() {
   }
 
   // ── Phase 2: fetch visible questions ───────────────────────────────
-  const fetchVisible = useCallback(async (currentAnswers, ctx) => {
+  const fetchVisible = useCallback(async (currentAnswers, ctx, isInitial) => {
     const context = ctx || contextRef.current
     if (!context) return
-    setLoading(true)
+    if (isInitial) setLoading(true)
+    else setRefreshing(true)
     try {
       const res = await api.post('/assessment/visible', {
         answers: currentAnswers,
@@ -68,6 +76,7 @@ export default function AssessmentPage() {
       console.error('Visible fetch failed:', err)
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
   }, [])
 
@@ -91,11 +100,11 @@ export default function AssessmentPage() {
     }
   }, [dispatch])
 
-  // Initial fetch when entering Phase 2 (use context answers to survive remount)
+  // Initial fetch when entering Phase 3 (use context answers to survive remount)
   useEffect(() => {
-    if (phase === 2 && categories.length === 0 && state.contextAnswers) {
+    if (phase === 3 && categories.length === 0 && state.contextAnswers) {
       const persisted = state.miraAnswers || {}
-      fetchVisible(persisted, state.contextAnswers)
+      fetchVisible(persisted, state.contextAnswers, true)
       fetchScores(persisted, state.contextAnswers)
     }
   }, [phase, state.contextAnswers]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -153,10 +162,27 @@ export default function AssessmentPage() {
     )
   }
 
-  // Phase 2: Maturity questions
+  // Phase 2: Capacity self-assessment
+  if (phase === 2) {
+    return (
+      <SelfAssessmentPhase
+        archetype={state.bridgeResult?.archetype}
+        confidence={state.bridgeResult?.confidence}
+        matchDistance={state.bridgeResult?.match_distance}
+        onComplete={(sliders, role) => {
+          dispatch({ type: 'SET_SELF_ASSESSMENT', sliders, role })
+        }}
+      />
+    )
+  }
+
+  // Phase 3: Maturity questions
   const currentCat = categories[currentCatIdx]
   const totalAnswered = Object.keys(answers).length
   const totalVisible = categories.reduce((sum, cat) => sum + cat.questions.length, 0)
+  const answerPct = getAnswerPct(totalAnswered, totalVisible)
+  const pctColour = answerPctColour(answerPct)
+  const isSufficient = answerPct >= MINIMUM_ANSWER_PCT
 
   return (
     <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-4">
@@ -186,8 +212,22 @@ export default function AssessmentPage() {
         <div className="grid grid-cols-3 gap-3">
           <ScoreBox label="Capability" value={scores.capability_pct} loading={scoresLoading} />
           <ScoreBox label="Operational" value={scores.operational_pct} loading={scoresLoading} />
-          <ScoreBox label="Progress" value={null} loading={false}
-            custom={`${totalAnswered} / ${totalVisible}`} sub="questions answered" />
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-md p-3 text-center">
+            <p className="text-sm text-[var(--text-muted)] mb-1">Progress</p>
+            <p className="text-lg font-bold">{totalAnswered} / {totalVisible}</p>
+            <div className="w-full h-1.5 bg-[var(--bg-primary)] rounded-full mt-2 mb-1.5 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-300"
+                style={{
+                  width: `${Math.min(answerPct * 100, 100)}%`,
+                  backgroundColor: pctColour,
+                }}
+              />
+            </div>
+            <p className="text-xs" style={{ color: pctColour }}>
+              {isSufficient ? 'Sufficient for submission' : 'Insufficient for submission'}
+            </p>
+          </div>
         </div>
       )}
 
@@ -240,7 +280,14 @@ export default function AssessmentPage() {
             <p className="text-sm text-[var(--text-muted)]">{currentCat.description}</p>
           </div>
 
-          <div className="space-y-2">
+          <div className={`space-y-2 relative transition-opacity duration-200 ${refreshing ? 'opacity-60 pointer-events-none' : ''}`}>
+            {refreshing && (
+              <div className="absolute inset-0 flex items-start justify-center pt-4 z-10">
+                <span className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] bg-[var(--bg-card)] border border-[var(--border)] rounded-full px-3 py-1 shadow-lg">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Updating questions...
+                </span>
+              </div>
+            )}
             {currentCat.questions.map(q => (
               <QuestionCard
                 key={q.id}
@@ -309,6 +356,202 @@ export default function AssessmentPage() {
     </div>
   )
 }
+
+// ---------------------------------------------------------------------------
+// Phase 2: Capacity Self-Assessment
+// ---------------------------------------------------------------------------
+
+const CAPACITY_QUESTIONS = [
+  {
+    key: 'inv',
+    label: 'Investment Capacity',
+    prompt: 'How much capacity does your organisation have to invest in quality improvement right now?',
+    options: [
+      'None — no budget or bandwidth for quality',
+      'Very little — token effort only',
+      'Some — modest but real investment',
+      'Good — well-supported quality programme',
+      'Significant — quality is a strategic priority',
+    ],
+  },
+  {
+    key: 'rec',
+    label: 'Recovery Capacity',
+    prompt: 'If something goes seriously wrong, how well can your team absorb and recover from it?',
+    options: [
+      "We can't — failure would be catastrophic",
+      'Poorly — recovery is slow and painful',
+      'Somewhat — we manage but it hurts',
+      'Well — we have contingency and resilience',
+      'Very well — we absorb setbacks routinely',
+    ],
+  },
+  {
+    key: 'owk',
+    label: 'Team Overwork',
+    prompt: 'How much is your team currently compensating through extra effort or overtime?',
+    options: [
+      'Not at all — sustainable pace',
+      'A little — occasional extra effort',
+      'Moderately — regular overtime',
+      'Heavily — team is stretched thin',
+      'Constantly — the team runs on extra effort',
+    ],
+  },
+  {
+    key: 'time',
+    label: 'Schedule Pressure',
+    prompt: 'How much schedule pressure is your project under?',
+    options: [
+      'Extreme — no slack whatsoever',
+      'High — very tight deadlines',
+      'Moderate — some breathing room',
+      'Low — comfortable timeline',
+      'Very relaxed — time to do things properly',
+    ],
+  },
+]
+
+const ROLE_OPTIONS = [
+  'Project / Delivery Manager',
+  'Test Manager / QA Lead',
+  'Developer / Architect',
+  'Senior Manager / Sponsor',
+  'Other',
+]
+
+function SelfAssessmentPhase({ archetype, confidence, matchDistance, onComplete }) {
+  const [selections, setSelections] = useState({})
+  const [role, setRole] = useState('')
+  const [customRole, setCustomRole] = useState('')
+
+  const allAnswered = CAPACITY_QUESTIONS.every(q => selections[q.key] !== undefined)
+
+  function handleSelect(key, idx) {
+    setSelections(prev => ({ ...prev, [key]: idx }))
+  }
+
+  function handleContinue() {
+    if (!allAnswered) return
+    // Map 0-4 indices to [0, 0.25, 0.5, 0.75, 1.0]
+    const sliders = CAPACITY_QUESTIONS.map(q => selections[q.key] * 0.25)
+    const finalRole = role === 'Other' ? (customRole.trim() || 'Other') : (role || null)
+    onComplete(sliders, finalRole)
+  }
+
+  return (
+    <div className="max-w-[1400px] mx-auto px-4 py-6 space-y-5">
+      {/* Archetype banner */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4">
+        <p className="text-sm font-bold text-[var(--text-primary)]">{archetype}</p>
+        <p className="text-sm text-[var(--text-muted)]">
+          {confidence} match
+          {matchDistance != null && ` — distance: ${matchDistance.toFixed(2)}`}
+        </p>
+      </div>
+
+      {/* Research context */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-5 space-y-3">
+        <h2 className="text-lg font-semibold">Capacity Self-Assessment</h2>
+        <div className="text-sm text-[var(--text-secondary)] space-y-2">
+          <p>
+            Before the detailed assessment, we'd like your instinctive view of four capacity
+            dimensions that shape your project's viability. There are no right answers — this
+            captures <em>your perspective</em> as a practitioner, which may differ from what the
+            model predicts or what the detailed questions reveal.
+          </p>
+          <p>
+            That difference is itself valuable research data. Every self-assessment measures the
+            organisation as seen through one person's lens — a project manager, test lead, and
+            developer assessing the same project will each emphasise different things. By capturing
+            your gut feeling separately, we can measure how respondent perspective shapes the
+            assessment and where the model needs calibration.
+          </p>
+        </div>
+      </div>
+
+      {/* Four capacity questions */}
+      {CAPACITY_QUESTIONS.map(q => (
+        <div key={q.key} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+          <div>
+            <h3 className="text-sm font-semibold text-[var(--text-primary)]">{q.label}</h3>
+            <p className="text-sm text-[var(--text-muted)] mt-0.5">{q.prompt}</p>
+          </div>
+          <div className="grid gap-1.5">
+            {q.options.map((opt, idx) => {
+              const selected = selections[q.key] === idx
+              return (
+                <button
+                  key={idx}
+                  onClick={() => handleSelect(q.key, idx)}
+                  className={`text-left text-sm px-3 py-2 rounded-md border transition-colors ${
+                    selected
+                      ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
+                      : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                  }`}
+                >
+                  {opt}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+
+      {/* Respondent role (optional) */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">
+            Your Role <span className="font-normal text-[var(--text-muted)]">(optional)</span>
+          </h3>
+          <p className="text-sm text-[var(--text-muted)] mt-0.5">
+            Knowing your role helps us understand how perspective shapes assessment.
+            This is entirely optional and anonymous.
+          </p>
+        </div>
+        <div className="grid gap-1.5">
+          {ROLE_OPTIONS.map(opt => {
+            const selected = role === opt
+            return (
+              <button
+                key={opt}
+                onClick={() => setRole(prev => prev === opt ? '' : opt)}
+                className={`text-left text-sm px-3 py-2 rounded-md border transition-colors ${
+                  selected
+                    ? 'border-[var(--accent)] bg-[var(--accent)]/15 text-[var(--text-primary)]'
+                    : 'border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                {opt}
+              </button>
+            )
+          })}
+          {role === 'Other' && (
+            <input
+              type="text"
+              value={customRole}
+              onChange={e => setCustomRole(e.target.value)}
+              placeholder="Describe your role..."
+              className="text-sm px-3 py-2 rounded-md border border-[var(--border)] bg-[var(--bg-primary)] text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:border-[var(--accent)]"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Continue button */}
+      <div className="flex justify-end pt-2">
+        <button
+          onClick={handleContinue}
+          disabled={!allAnswered}
+          className="flex items-center gap-1.5 px-5 py-2.5 text-sm font-medium bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+        >
+          Continue to Assessment <ArrowRight className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  )
+}
+
 
 /** Small score box for the preview bar */
 function ScoreBox({ label, value, loading, custom, sub }) {
