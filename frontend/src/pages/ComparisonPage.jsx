@@ -86,7 +86,22 @@ export default function ComparisonPage() {
             </button>
             <div className="flex gap-2">
               <button
-                onClick={() => navigate('/results')}
+                onClick={() => {
+                  // If user selected an archetype, switch Explorer to it
+                  if (userChoice && archetypes?.archetypes) {
+                    const arch = archetypes.archetypes[userChoice]
+                    if (arch && userChoice !== bridgeResult.archetype) {
+                      dispatch({
+                        type: 'SET_CONTEXT_RESULT',
+                        contextAnswers: state.contextAnswers,
+                        bridgeResult: { archetype: userChoice, dimensions: arch.dimensions, confidence: 'self_mapped' },
+                        defaultSliders: arch.default_sliders,
+                        defaultPosition: arch.default_position,
+                      })
+                    }
+                  }
+                  navigate('/results')
+                }}
                 className="flex items-center gap-1.5 px-4 py-2 text-sm bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] transition-colors"
               >
                 Explore the Model <ArrowRight className="w-4 h-4" />
