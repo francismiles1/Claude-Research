@@ -265,122 +265,21 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      {/* ── Building on existing work ────────────────────────────── */}
-      <div className="space-y-5">
-        <div className="space-y-2">
-          <h2 className="text-xl font-semibold">Building on Existing Work</h2>
-          <p className="text-base text-[var(--text-secondary)] leading-relaxed">
-            This model does not exist in isolation. It draws on — and attempts to
-            connect — ideas from several established frameworks, each of which
-            addresses part of the problem.
+      {/* ── Research background link ──────────────────────────────── */}
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-6 flex items-center justify-between">
+        <div className="space-y-1">
+          <h2 className="text-lg font-semibold">Research Background</h2>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Framework relationships, the classification gap, respondent bias
+            normalisation, and detailed model transparency.
           </p>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Bach / Context-Driven */}
-          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-5 space-y-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold text-[var(--accent)]">Philosophical foundation</span>
-            </div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              Context-Driven Testing
-            </h3>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-              James Bach and the context-driven school have argued since 1994 that
-              appropriate maturity depends on project type — &ldquo;practices
-              appropriate to one project would be criminally negligent in
-              another.&rdquo; This model formalises that philosophy into a
-              computable function.
-            </p>
-          </div>
-
-          {/* Koenders / Osborne */}
-          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-5 space-y-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold text-[var(--accent)]">Axis validation</span>
-            </div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              Design vs Operational Effectiveness
-            </h3>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-              Koenders and Osborne independently identified the same axis split —
-              separating &ldquo;having capabilities&rdquo; from &ldquo;actually
-              using them&rdquo; — in data governance. Their work validates that
-              this decomposition is fundamental, not domain-specific. This model
-              applies it to software project maturity and adds context-dependent
-              targets.
-            </p>
-          </div>
-
-          {/* Westerman */}
-          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-5 space-y-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold text-[var(--accent)]">Structural precedent</span>
-            </div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              Digital Maturity Matrix
-            </h3>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-              Westerman et al. (MIT, 2014) demonstrated that a two-axis maturity
-              grid produces richer insight than a single ladder. Their model treats
-              the top-right quadrant as universally desirable. This model adopts the
-              two-axis structure but rejects the universal target — the right
-              position depends on your project type.
-            </p>
-          </div>
-
-          {/* CMMI + DORA as measurement */}
-          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-5 space-y-2">
-            <div className="flex items-baseline gap-2">
-              <span className="text-sm font-bold text-[var(--accent)]">Measurement instruments</span>
-            </div>
-            <h3 className="text-base font-semibold text-[var(--text-primary)]">
-              CMMI, TMMi, DORA
-            </h3>
-            <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-              Existing frameworks already measure the individual axes well. CMMI
-              and TMMi assess process capability; DORA measures delivery
-              performance. This model does not replace them — it sits above
-              them as a contextualisation layer, connecting their measurements
-              to the question: <em>&ldquo;given your project type, what should
-              those scores be?&rdquo;</em>
-            </p>
-          </div>
-        </div>
-
-        <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-5">
-          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-            <strong className="text-[var(--text-primary)]">The connective layer.</strong> Each
-            of these frameworks addresses part of the problem: Bach provides the philosophical
-            licence, Koenders validates the axis decomposition, Westerman proves the 2D structure,
-            and CMMI/DORA provide measurement instruments. What appears to be missing — and what
-            this research explores — is the layer that connects measurement to context: a model
-            that takes project characteristics as input and outputs a viable maturity range on
-            both axes simultaneously. This has not, to our knowledge, been formally proposed in
-            software engineering literature.
-          </p>
-        </div>
-      </div>
-
-      {/* ── The classification gap ────────────────────────────────── */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-8 space-y-4">
-        <h2 className="text-xl font-semibold">The Classification Gap</h2>
-        <p className="text-base text-[var(--text-secondary)] leading-relaxed">
-          Surprisingly, the software industry has never settled on a structural
-          taxonomy of project types. Shenhar &amp; Dvir (2007) studied 600+ projects
-          across four dimensions but deliberately avoided naming discrete types.
-          Kruchten (2013) identified 13 contextual dimensions for agile projects but
-          derived no categories. Cockburn, Boehm, and others proposed 2–5 dimension
-          models with at most a handful of broad categories. <strong
-          className="text-[var(--text-primary)]">No published framework defines named
-          structural archetypes of software projects with outcome predictions.</strong>
-        </p>
-        <p className="text-base text-[var(--text-secondary)] leading-relaxed">
-          This model proposes 15 named archetypes across 8 dimensions — more granular
-          than anything in the literature. Whether 15 is the right number, whether the
-          dimensions are the right ones, and whether the taxonomy captures real-world
-          project diversity are open questions. That is precisely what we are testing.
-        </p>
+        <button
+          onClick={() => navigate('/research')}
+          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent)] border border-[var(--accent)] rounded-md hover:bg-[var(--accent)]/10 transition-colors flex-shrink-0 ml-4"
+        >
+          <BookOpen className="w-4 h-4" /> Read More
+        </button>
       </div>
 
       {/* ── Why we need your help ─────────────────────────────────── */}
@@ -402,51 +301,6 @@ export default function WelcomePage() {
           <li>Are there project types the taxonomy does not capture?</li>
           <li>Does the assessment produce maturity scores that practitioners recognise?</li>
         </ul>
-      </div>
-
-      {/* ── The bigger picture ───────────────────────────────────── */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-8 space-y-4">
-        <h2 className="text-xl font-semibold">The Bigger Picture</h2>
-        <p className="text-base text-[var(--text-secondary)] leading-relaxed">
-          This research is the foundation for a <strong
-          className="text-[var(--text-primary)]">continuous maturity and risk
-          assessment tool</strong>. The goal is not a one-time classification — it
-          is an instrument that can derive a close approximation to how a software
-          project works and where it is vulnerable, then track its position on the
-          Cap/Ops grid over time.
-        </p>
-        <p className="text-base text-[var(--text-secondary)] leading-relaxed">
-          Imagine a tool that can detect when a project is drifting out of its viable
-          zone, derive risk-based measures from the gap between where you are and
-          where your project type needs to be, and calculate maturity on an ongoing
-          basis — not as a static audit, but as a living assessment that evolves
-          with the project.
-        </p>
-        <p className="text-base text-[var(--text-secondary)] leading-relaxed">
-          Before that tool can be built, the archetype taxonomy and its
-          parameterisation must be validated against real-world experience. <strong
-          className="text-[var(--text-primary)]">That is what this assessment
-          does.</strong> Every response helps us determine whether the model's
-          predictions match practitioner reality — and where they do not, what
-          needs to change.
-        </p>
-      </div>
-
-      {/* ── How it works — guide link ──────────────────────────────── */}
-      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-6 flex items-center justify-between">
-        <div className="space-y-1">
-          <h2 className="text-lg font-semibold">How It Works</h2>
-          <p className="text-sm text-[var(--text-secondary)]">
-            A four-step process taking approximately 10–20 minutes. The Guide covers
-            each screen in detail and explains how to get the most from the results.
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/guide')}
-          className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--accent)] border border-[var(--accent)] rounded-md hover:bg-[var(--accent)]/10 transition-colors flex-shrink-0 ml-4"
-        >
-          <BookOpen className="w-4 h-4" /> View Guide
-        </button>
       </div>
 
       {/* ── Model transparency ────────────────────────────────────── */}

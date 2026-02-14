@@ -7,6 +7,7 @@ import { Loader2 } from 'lucide-react'
 // Eager — lightweight pages loaded immediately
 import WelcomePage from './pages/WelcomePage'
 import GuidePage from './pages/GuidePage'
+import ResearchPage from './pages/ResearchPage'
 
 // Lazy — heavy pages (Plotly, question engine) loaded on demand
 const AssessmentPage = lazy(() => import('./pages/AssessmentPage'))
@@ -31,6 +32,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<WelcomePage />} />
               <Route path="/guide" element={<GuidePage />} />
+              <Route path="/research" element={<ResearchPage />} />
               <Route path="/assess" element={<AssessmentPage />} />
               <Route path="/comparison" element={<ComparisonPage />} />
               <Route path="/results" element={<ResultsPage />} />

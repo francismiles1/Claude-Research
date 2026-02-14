@@ -9,6 +9,7 @@ import { useAssessment, useAssessmentDispatch } from '../context/AssessmentConte
 const STEPS = [
   { path: '/', label: 'Welcome', key: 'welcome' },
   { path: '/guide', label: 'Guide', key: 'guide' },
+  { path: '/research', label: 'Research', key: 'research' },
   { path: '/assess', label: 'Assessment', key: 'assess' },
   { path: '/comparison', label: 'Results', key: 'comparison' },
   { path: '/results', label: 'Explorer', key: 'results' },
@@ -29,10 +30,11 @@ export default function Layout({ children }) {
   function canNavigate(step, idx) {
     if (idx === 0) return true                      // Welcome — always
     if (idx === 1) return true                      // Guide — always
-    if (idx === 2) return true                      // Assessment — always
-    if (idx === 3) return !!state.contextAnswers    // Results — needs full assessment
-    if (idx === 4) return !!state.bridgeResult      // Explorer — just needs archetype
-    if (idx === 5) return !!state.bridgeResult       // Feedback — needs archetype (any flow)
+    if (idx === 2) return true                      // Research — always
+    if (idx === 3) return true                      // Assessment — always
+    if (idx === 4) return !!state.contextAnswers    // Results — needs full assessment
+    if (idx === 5) return !!state.bridgeResult      // Explorer — just needs archetype
+    if (idx === 6) return !!state.bridgeResult      // Feedback — needs archetype (any flow)
     return false
   }
 
