@@ -215,8 +215,28 @@ export default function ResearchPage() {
         </h3>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
           Before the detailed assessment questions, we ask four plain-English capacity
-          questions covering Investment, Recovery, Overwork, and Schedule Pressure. This
-          achieves three things:
+          questions — each mapped to one of the model's capacity sliders:
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Investment Capacity</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much capacity does your organisation have to invest in quality improvement right now?&rdquo;</p>
+          </div>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Recovery Capacity</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;If something goes seriously wrong, how well can your team absorb and recover from it?&rdquo;</p>
+          </div>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Team Overwork</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much is your team currently compensating through extra effort or overtime?&rdquo;</p>
+          </div>
+          <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Schedule Pressure</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much schedule pressure is your project under?&rdquo;</p>
+          </div>
+        </div>
+        <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-4">
+          This achieves three things:
         </p>
         <div className="space-y-3 mt-3">
           <MechanismCard
