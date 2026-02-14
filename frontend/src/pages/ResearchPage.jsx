@@ -219,20 +219,24 @@ export default function ResearchPage() {
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">Investment Capacity</p>
-            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much capacity does your organisation have to invest in quality improvement right now?&rdquo;</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Investment in Quality</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much can your project invest in improving quality right now?&rdquo;</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1 italic">Hiring, contracting, tools, training, dedicated time.</p>
           </div>
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
-            <p className="text-sm font-semibold text-[var(--text-primary)]">Recovery Capacity</p>
-            <p className="text-xs text-[var(--text-muted)]">&ldquo;If something goes seriously wrong, how well can your team absorb and recover from it?&rdquo;</p>
+            <p className="text-sm font-semibold text-[var(--text-primary)]">Recovery from Setbacks</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;When the project hits a serious setback, how well can it absorb the impact and recover?&rdquo;</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1 italic">Critical defects, failed releases, key people leaving, requirement changes.</p>
           </div>
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
             <p className="text-sm font-semibold text-[var(--text-primary)]">Team Overwork</p>
-            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much is your team currently compensating through extra effort or overtime?&rdquo;</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much is the team currently relying on extra effort to meet commitments?&rdquo;</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1 italic">Sustained overtime, weekend work, covering multiple roles.</p>
           </div>
           <div className="bg-[var(--bg-primary)] border border-[var(--border)] rounded-md p-3">
             <p className="text-sm font-semibold text-[var(--text-primary)]">Schedule Pressure</p>
-            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much schedule pressure is your project under?&rdquo;</p>
+            <p className="text-xs text-[var(--text-muted)]">&ldquo;How much time pressure is the project under?&rdquo;</p>
+            <p className="text-xs text-[var(--text-muted)] mt-1 italic">Slack for reviews, testing, refactoring — not just deadline pressure.</p>
           </div>
         </div>
         <p className="text-sm text-[var(--text-secondary)] leading-relaxed mt-4">

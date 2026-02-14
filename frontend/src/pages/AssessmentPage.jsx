@@ -364,50 +364,54 @@ export default function AssessmentPage() {
 const CAPACITY_QUESTIONS = [
   {
     key: 'inv',
-    label: 'Investment Capacity',
-    prompt: 'How much capacity does your organisation have to invest in quality improvement right now?',
+    label: 'Investment in Quality',
+    prompt: 'How much can your project invest in improving quality right now?',
+    scope: 'Think broadly: hiring or contracting additional resource, purchasing tools or licences, funding training, or dedicating existing staff time to quality initiatives.',
     options: [
-      'None — no budget or bandwidth for quality',
-      'Very little — token effort only',
-      'Some — modest but real investment',
-      'Good — well-supported quality programme',
-      'Significant — quality is a strategic priority',
+      'Nothing — no budget, no headcount, no time allocated',
+      'Very little — token effort only (e.g. one person part-time)',
+      'Some — modest but real investment (e.g. dedicated budget or resource)',
+      'Good — well-supported programme (e.g. funded team, tools, training)',
+      'Significant — quality improvement is a funded strategic priority',
     ],
   },
   {
     key: 'rec',
-    label: 'Recovery Capacity',
-    prompt: 'If something goes seriously wrong, how well can your team absorb and recover from it?',
+    label: 'Recovery from Setbacks',
+    prompt: 'When the project hits a serious setback, how well can it absorb the impact and recover?',
+    scope: 'Examples: a critical defect found late, a failed release, a key team member leaving, a major requirement change, or a security incident. Consider the whole project, not just your team.',
     options: [
-      "We can't — failure would be catastrophic",
-      'Poorly — recovery is slow and painful',
-      'Somewhat — we manage but it hurts',
-      'Well — we have contingency and resilience',
-      'Very well — we absorb setbacks routinely',
+      "We can't recover — a serious setback would threaten the project",
+      'Poorly — recovery takes weeks and derails other work',
+      'With difficulty — we get through it but it sets us back significantly',
+      'Reasonably well — we have contingency plans and can absorb most setbacks',
+      'Very well — setbacks are routine and we have the resilience to handle them',
     ],
   },
   {
     key: 'owk',
     label: 'Team Overwork',
-    prompt: 'How much is your team currently compensating through extra effort or overtime?',
+    prompt: 'How much is the team currently relying on extra effort to meet commitments?',
+    scope: 'Consider: regular overtime, weekend work, skipping breaks, people covering multiple roles, or consistently working beyond contracted hours. Sustained overwork, not occasional crunch.',
     options: [
-      'Not at all — sustainable pace',
-      'A little — occasional extra effort',
-      'Moderately — regular overtime',
-      'Heavily — team is stretched thin',
-      'Constantly — the team runs on extra effort',
+      'Not at all — the team works at a sustainable pace',
+      'A little — occasional late evenings around deadlines',
+      'Moderately — regular overtime is expected to meet commitments',
+      'Heavily — the team is stretched thin and people are burning out',
+      'Constantly — delivery depends on people working well beyond capacity',
     ],
   },
   {
     key: 'time',
     label: 'Schedule Pressure',
-    prompt: 'How much schedule pressure is your project under?',
+    prompt: 'How much time pressure is the project under?',
+    scope: 'Consider whether there is slack in the schedule for quality activities: code reviews, proper testing, refactoring, documentation. Not just deadline pressure, but whether quality can be given time.',
     options: [
-      'Extreme — no slack whatsoever',
-      'High — very tight deadlines',
-      'Moderate — some breathing room',
-      'Low — comfortable timeline',
-      'Very relaxed — time to do things properly',
+      'Extreme — no slack, quality activities are regularly cut to meet dates',
+      'High — tight deadlines, quality gets squeezed',
+      'Moderate — some breathing room for quality work',
+      'Low — comfortable timeline, quality activities are rarely compromised',
+      'Very relaxed — time to do things properly without schedule pressure',
     ],
   },
 ]
@@ -476,6 +480,9 @@ function SelfAssessmentPhase({ archetype, confidence, matchDistance, onComplete 
           <div>
             <h3 className="text-sm font-semibold text-[var(--text-primary)]">{q.label}</h3>
             <p className="text-sm text-[var(--text-muted)] mt-0.5">{q.prompt}</p>
+            {q.scope && (
+              <p className="text-xs text-[var(--text-muted)] mt-1.5 leading-relaxed italic">{q.scope}</p>
+            )}
           </div>
           <div className="grid gap-1.5">
             {q.options.map((opt, idx) => {
