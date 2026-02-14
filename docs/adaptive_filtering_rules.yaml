@@ -182,6 +182,21 @@ category_dependencies:
         - ARC-C5c
     user_message: "Legacy code/systems detected - adding legacy assessment questions"
 
+  # Manual config management = skip CI/CD and deployment questions
+  - id: CD-005
+    description: "Manual config management - skip CI/CD and deployment questions"
+    trigger:
+      question_id: ENV-C2
+      operator: equals
+      value: manual
+    action:
+      type: skip_questions
+      questions:
+        - ENV-O3
+        - ENV-O4
+        - ENV-O5
+    user_message: "Manual configuration management - skipping CI/CD and deployment questions"
+
   # No CI/CD pipeline = skip pipeline health questions
   # VALID EDGE-CASE: No current persona triggers this (all use some CI/CD)
   - id: CD-006
@@ -212,6 +227,72 @@ category_dependencies:
         - TST-O4
         - TST-O5
     user_message: "No performance testing capability - skipping performance metrics"
+
+  # No test strategy = skip risk-based and automation strategy questions
+  - id: CD-009-NEW
+    description: "No test strategy - skip risk-based and automation strategy"
+    trigger:
+      question_id: TST-C1
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - TST-C2
+        - TST-C3
+    user_message: "No test strategy - skipping risk-based and automation strategy questions"
+
+  # No scope change control = skip change volume question
+  - id: CD-010
+    description: "No scope change control - skip change volume"
+    trigger:
+      question_id: CHG-C2
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - CHG-O1
+    user_message: "No scope change control - skipping change volume question"
+
+  # No DR/rollback approach = skip DR test results
+  - id: CD-011
+    description: "No DR/rollback approach - skip DR test results"
+    trigger:
+      question_id: OPS-C2
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - OPS-O2
+    user_message: "No DR/rollback approach - skipping DR test results question"
+
+  # No test data strategy = skip test data management rating
+  - id: CD-012
+    description: "No test data strategy - skip test data management rating"
+    trigger:
+      question_id: ENV-C1
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - ENV-O5
+    user_message: "No test data strategy - skipping test data management question"
+
+  # No quality gates = skip gate pass/waiver rate
+  - id: CD-013
+    description: "No quality gates - skip gate pass/waiver rate"
+    trigger:
+      question_id: GOV-C3
+      operator: equals
+      value: "none"
+    action:
+      type: skip_questions
+      questions:
+        - GOV-O3
+    user_message: "No quality gates defined - skipping gate pass/waiver rate question"
 
   # Defect origin tracking enables phase leakage questions
   # Skip until DFM-C3 is answered with a value other than 'none'
@@ -523,14 +604,32 @@ reactive_triggers:
   ARC-C5:
     triggers_rules: [CD-004, SLB-004]
     tooltip: "Your answer may show or hide legacy system questions"
+  ENV-C2:
+    triggers_rules: [CD-005]
+    tooltip: "Your answer may show or hide CI/CD and deployment questions"
   ENV-O3:
     triggers_rules: [CD-006]
     tooltip: "Your answer may show or hide CI/CD pipeline questions"
     # CD-006: Valid edge-case rule - no current persona uses none/manual_only CI/CD
+  TST-C1:
+    triggers_rules: [CD-009-NEW]
+    tooltip: "Your answer may show or hide risk-based and automation strategy questions"
   TST-C4:
     triggers_rules: [CD-007]
     tooltip: "Your answer may show or hide test metrics and release alignment questions"
     # CD-007: Hides TST-O4, TST-O5 when answered "no"
+  CHG-C2:
+    triggers_rules: [CD-010]
+    tooltip: "Your answer may show or hide scope change volume question"
+  OPS-C2:
+    triggers_rules: [CD-011]
+    tooltip: "Your answer may show or hide DR test results question"
+  ENV-C1:
+    triggers_rules: [CD-012]
+    tooltip: "Your answer may show or hide test data management question"
+  GOV-C3:
+    triggers_rules: [CD-013]
+    tooltip: "Your answer may show or hide gate pass/waiver rate question"
   TST-O4:
     triggers_rules: [CD-029]
     tooltip: "Your answer may show or hide metrics review questions"

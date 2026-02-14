@@ -1524,6 +1524,12 @@ CATEGORY_DEPENDENCIES = [
         "add": ["ARC-C5a", "ARC-C5b", "ARC-C5c"],
     },
     {
+        "id": "CD-005",
+        "description": "Manual config management — skip CI/CD and deployment questions",
+        "trigger": {"question_id": "ENV-C2", "operator": "equals", "value": "manual"},
+        "skip": ["ENV-O3", "ENV-O4", "ENV-O5"],
+    },
+    {
         "id": "CD-006",
         "description": "No CI/CD — skip pipeline health",
         "trigger": {"question_id": "ENV-O3", "operator": "less_than", "value": 3},
@@ -1540,6 +1546,36 @@ CATEGORY_DEPENDENCIES = [
         "description": "No leadership path — skip scaling questions",
         "trigger": {"question_id": "GOV-O4", "operator": "equals", "value": False},
         "skip": ["GOV-C4", "GOV-O5"],
+    },
+    {
+        "id": "CD-009",
+        "description": "No test strategy — skip risk-based and automation strategy",
+        "trigger": {"question_id": "TST-C1", "operator": "equals", "value": "none"},
+        "skip": ["TST-C2", "TST-C3"],
+    },
+    {
+        "id": "CD-010",
+        "description": "No scope change control — skip change volume",
+        "trigger": {"question_id": "CHG-C2", "operator": "equals", "value": "none"},
+        "skip": ["CHG-O1"],
+    },
+    {
+        "id": "CD-011",
+        "description": "No DR/rollback approach — skip DR test results",
+        "trigger": {"question_id": "OPS-C2", "operator": "equals", "value": "none"},
+        "skip": ["OPS-O2"],
+    },
+    {
+        "id": "CD-012",
+        "description": "No test data strategy — skip test data management rating",
+        "trigger": {"question_id": "ENV-C1", "operator": "equals", "value": "none"},
+        "skip": ["ENV-O5"],
+    },
+    {
+        "id": "CD-013",
+        "description": "No quality gates — skip gate pass/waiver rate",
+        "trigger": {"question_id": "GOV-C3", "operator": "equals", "value": "none"},
+        "skip": ["GOV-O3"],
     },
     {
         "id": "CD-DFM-GATE-NONE",
