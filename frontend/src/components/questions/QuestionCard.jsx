@@ -4,7 +4,7 @@
  * Hover-to-expand shows contextual help text when available.
  */
 import { useState } from 'react'
-import { CheckCircle, GitBranch } from 'lucide-react'
+import { CheckCircle, GitBranch, Zap } from 'lucide-react'
 import ToggleInput from './ToggleInput'
 import SelectInput from './SelectInput'
 import SliderInput from './SliderInput'
@@ -70,8 +70,13 @@ export default function QuestionCard({ question, value, onChange }) {
         <div className="flex items-start justify-between gap-2">
           <p className={`text-sm text-[var(--text-primary)]${question.help ? ' cursor-help' : ''}`}>{question.text}</p>
           <div className="flex items-center gap-1.5 flex-shrink-0">
+            {question.trigger && (
+              <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded bg-purple-900/30 text-purple-400" title="Your answer controls which questions appear next">
+                <Zap className="w-3 h-3" />
+              </span>
+            )}
             {question.adaptive && (
-              <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400" title="Adaptive — may appear or disappear based on other answers">
+              <span className="flex items-center gap-0.5 text-xs px-1.5 py-0.5 rounded bg-amber-900/30 text-amber-400" title="Adaptive — appeared based on another answer">
                 <GitBranch className="w-3 h-3" />
               </span>
             )}

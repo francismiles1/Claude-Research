@@ -47,6 +47,26 @@ for _pd in PROGRESSIVE_DISCLOSURE:
         if _stage.get("condition"):
             _ADAPTIVE_IDS.update(_stage.get("questions", []))
 
+# Pre-compute trigger question IDs — questions whose answers control
+# which other questions appear or disappear.
+_TRIGGER_IDS: set[str] = set()
+
+for _dep in CATEGORY_DEPENDENCIES:
+    _trig = _dep.get("trigger", {})
+    if "question_id" in _trig:
+        _TRIGGER_IDS.add(_trig["question_id"])
+
+for _branch in SECOND_LEVEL_BRANCHES:
+    for _cond in _branch.get("trigger", {}).get("conditions", []):
+        if "question_id" in _cond:
+            _TRIGGER_IDS.add(_cond["question_id"])
+
+for _pd in PROGRESSIVE_DISCLOSURE:
+    for _stage in _pd.get("stages", []):
+        _cond = _stage.get("condition", {})
+        if "question_id" in _cond:
+            _TRIGGER_IDS.add(_cond["question_id"])
+
 
 @router.post("/assessment/visible", response_model=VisibleResponse)
 async def get_visible(req: VisibleRequest):
@@ -91,6 +111,7 @@ async def get_visible(req: VisibleRequest):
                     "scoring_order": q.get("scoring_order", "ascending"),
                     "answered": is_answered,
                     "adaptive": qid in _ADAPTIVE_IDS,
+                    "trigger": qid in _TRIGGER_IDS,
                 })
 
         if cat_questions:
