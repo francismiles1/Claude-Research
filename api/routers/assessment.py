@@ -16,9 +16,36 @@ from lib.question_engine import (
     compute_scores,
     classify_diagnostic,
 )
-from lib.mira_questions import QUESTIONS, CATEGORIES, QUESTION_HELP
+from lib.mira_questions import (
+    QUESTIONS, CATEGORIES, QUESTION_HELP,
+    CATEGORY_DEPENDENCIES, SECOND_LEVEL_BRANCHES, PROGRESSIVE_DISCLOSURE,
+)
 
 router = APIRouter(tags=["assessment"])
+
+# Pre-compute all adaptive question IDs — questions whose visibility depends
+# on answers to other questions or context. This includes:
+# - Questions in skip/add lists of category dependencies
+# - Questions added by second-level branches
+# - Questions in branch_questions lists
+# - Questions in progressive disclosure stages with conditions
+_ADAPTIVE_IDS: set[str] = set()
+
+for _cat in CATEGORIES.values():
+    _ADAPTIVE_IDS.update(_cat.get("branch_questions", []))
+    _ADAPTIVE_IDS.update(_cat.get("conditional_questions", []))
+
+for _dep in CATEGORY_DEPENDENCIES:
+    _ADAPTIVE_IDS.update(_dep.get("skip", []))
+    _ADAPTIVE_IDS.update(_dep.get("add", []))
+
+for _branch in SECOND_LEVEL_BRANCHES:
+    _ADAPTIVE_IDS.update(_branch.get("add", []))
+
+for _pd in PROGRESSIVE_DISCLOSURE:
+    for _stage in _pd.get("stages", []):
+        if _stage.get("condition"):
+            _ADAPTIVE_IDS.update(_stage.get("questions", []))
 
 
 @router.post("/assessment/visible", response_model=VisibleResponse)
@@ -37,7 +64,6 @@ async def get_visible(req: VisibleRequest):
         # Collect all questions in this category
         for qlist in ("capability_questions", "operational_questions",
                       "conditional_questions", "branch_questions"):
-            is_adaptive = qlist in ("conditional_questions", "branch_questions")
             for qid in cat.get(qlist, []):
                 if qid not in visible_set:
                     continue
@@ -64,7 +90,7 @@ async def get_visible(req: VisibleRequest):
                     "inverse": q.get("inverse", False),
                     "scoring_order": q.get("scoring_order", "ascending"),
                     "answered": is_answered,
-                    "adaptive": is_adaptive,
+                    "adaptive": qid in _ADAPTIVE_IDS,
                 })
 
         if cat_questions:
