@@ -79,6 +79,11 @@ function reducer(state, action) {
         ...state,
         miraAnswers: { ...state.miraAnswers, ...action.answers },
       }
+    case 'REPLACE_ANSWERS':
+      return {
+        ...state,
+        miraAnswers: action.answers,
+      }
     case 'SET_ENGINE_SCORES':
       return { ...state, engineScores: action.scores }
     case 'SET_SLIDERS':

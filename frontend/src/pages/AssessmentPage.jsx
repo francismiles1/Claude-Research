@@ -72,13 +72,32 @@ export default function AssessmentPage() {
         context,
       })
       setCategories(res.data.categories)
+
+      // Prune answers to questions no longer visible (e.g. trigger changed)
+      const visibleIds = new Set()
+      for (const cat of res.data.categories) {
+        for (const q of cat.questions) visibleIds.add(q.id)
+      }
+      const pruned = {}
+      let didPrune = false
+      for (const [qid, val] of Object.entries(currentAnswers)) {
+        if (visibleIds.has(qid)) {
+          pruned[qid] = val
+        } else {
+          didPrune = true
+        }
+      }
+      if (didPrune) {
+        setAnswers(pruned)
+        dispatch({ type: 'REPLACE_ANSWERS', answers: pruned })
+      }
     } catch (err) {
       console.error('Visible fetch failed:', err)
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
-  }, [])
+  }, [dispatch])
 
   // Fetch scores
   const fetchScores = useCallback(async (currentAnswers, ctx) => {
