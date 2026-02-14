@@ -32,6 +32,7 @@ export default function IdentifyPage() {
   const [displayName, setDisplayName] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
   const [editingNoteCategory, setEditingNoteCategory] = useState(null)
 
   const isQuickStart = state.flowType === 'quick_start'
@@ -64,6 +65,7 @@ export default function IdentifyPage() {
 
   async function handleSubmit() {
     setSubmitting(true)
+    setSubmitError(null)
 
     try {
       // Log assessment first if not already logged
@@ -88,10 +90,11 @@ export default function IdentifyPage() {
           self_time: state.selfAssessedSliders?.[3] ?? null,
           respondent_role: state.respondentRole || null,
         })
-        assessmentId = logRes.data.id
-        if (assessmentId) {
-          dispatch({ type: 'SET_ASSESSMENT_ID', id: assessmentId })
+        assessmentId = logRes.data?.id
+        if (!assessmentId) {
+          throw new Error('Assessment log did not return an ID — data may not have been saved.')
         }
+        dispatch({ type: 'SET_ASSESSMENT_ID', id: assessmentId })
       }
 
       // Log identification
@@ -146,13 +149,18 @@ export default function IdentifyPage() {
           category_notes: state.categoryNotes,
         })
       }
-    } catch (err) {
-      console.error('Logging failed:', err)
-      // Graceful — don't block the user
-    }
 
-    setSubmitting(false)
-    setSubmitted(true)
+      setSubmitting(false)
+      setSubmitted(true)
+    } catch (err) {
+      console.error('Submission failed:', err)
+      setSubmitting(false)
+      setSubmitError(
+        err.response?.data?.detail
+          || err.message
+          || 'Something went wrong. Please try again.'
+      )
+    }
   }
 
   if (!state.bridgeResult) return null
@@ -482,6 +490,16 @@ export default function IdentifyPage() {
       </div>
 
       {/* Submit */}
+      {submitError && (
+        <div className="bg-red-900/20 border border-red-700/40 rounded-lg p-4">
+          <p className="text-sm text-red-400">
+            <strong>Submission failed:</strong> {submitError}
+          </p>
+          <p className="text-xs text-[var(--text-muted)] mt-1">
+            Your answers are still in your browser — nothing has been lost. Please try again.
+          </p>
+        </div>
+      )}
       {state.consentGiven && hasSufficientAnswers ? (
         <button
           onClick={handleSubmit}
@@ -490,6 +508,8 @@ export default function IdentifyPage() {
         >
           {submitting ? (
             <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+          ) : submitError ? (
+            <><Send className="w-4 h-4" /> Retry Submission</>
           ) : (
             <><Send className="w-4 h-4" /> Submit &amp; Finish</>
           )}
