@@ -102,8 +102,10 @@ export default function ResultsPage() {
   }, [])
 
   // Save practitioner calibration (shared by manual save and auto-save on archetype change)
+  // Returns true on success, false on failure.
   const saveCalibration = useCallback(async (trigger, reason) => {
-    if (!bridgeResult || !defaultSliders || !currentSliders) return
+    if (!bridgeResult || !defaultSliders || !currentSliders) return false
+    if (!sessionId) return false
     try {
       await api.post('/log/calibration', {
         session_id: sessionId,
@@ -125,8 +127,10 @@ export default function ResultsPage() {
         operational_pct: engineScores?.operational_pct ?? null,
         reason: reason || null,
       })
+      return true
     } catch (err) {
       console.error('Calibration log failed:', err)
+      return false
     }
   }, [bridgeResult, defaultSliders, currentSliders, defaultPosition,
       assessedCap, assessedOps, state.inspectCap, state.inspectOps,
@@ -134,8 +138,8 @@ export default function ResultsPage() {
 
   async function handleSaveCalibration() {
     setSaving(true)
-    await saveCalibration('manual', adjustReason.trim() || null)
-    setSaved(true)
+    const ok = await saveCalibration('manual', adjustReason.trim() || null)
+    setSaved(ok)
     setSaving(false)
   }
 
@@ -350,14 +354,16 @@ export default function ResultsPage() {
               <div className="flex items-center gap-2 text-sm text-green-400">
                 <CheckCircle className="w-4 h-4" /> Practitioner calibration saved
               </div>
+            ) : !consentGiven ? (
+              <p className="text-sm text-[var(--text-muted)]">
+                <strong className="text-[var(--text-secondary)]">Practitioner Calibration</strong> — your
+                slider adjustments and confirmation will be saved when you consent and submit on the Feedback page.
+              </p>
             ) : hasDeviation ? (
               <div className="space-y-3">
                 <p className="text-sm text-[var(--text-secondary)]">
                   <strong className="text-[var(--text-primary)]">Save Practitioner Calibration</strong> — your
                   slider adjustments help calibrate the model against real-world experience.
-                  {!consentGiven && (
-                    <span className="text-[var(--text-muted)]"> (Saved when you submit on the Feedback page.)</span>
-                  )}
                 </p>
                 <div className="flex items-center gap-3">
                   <input
@@ -391,8 +397,8 @@ export default function ResultsPage() {
                 <button
                   onClick={async () => {
                     setSaving(true)
-                    await saveCalibration('defaults_confirmed', null)
-                    setSaved(true)
+                    const ok = await saveCalibration('defaults_confirmed', null)
+                    setSaved(ok)
                     setSaving(false)
                   }}
                   disabled={saving}

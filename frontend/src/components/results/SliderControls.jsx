@@ -11,37 +11,45 @@ const SLIDERS = [
   {
     key: 'investment',
     label: 'Investment',
-    question: 'Can you afford to move on the grid?',
-    detail: 'Resource availability for process improvement — hiring, tooling, training. ' +
-      'Dominates the sustainability upper bound for almost all archetypes. ' +
-      'High regulation and outsourcing demand more investment; stable teams need less.',
+    question: 'How much capacity does the project have to invest in quality improvement?',
+    lowLabel: 'No capacity — frozen budgets, no headcount or tooling available',
+    highLabel: 'Full capacity — can add people, tools, consultants, training as needed',
+    detail: 'Covers any resource addition: hiring, contractors, tooling, training, consultancy. ' +
+      'Without investment capacity the viable zone shrinks — this slider sets the upper bound ' +
+      'on what the project can sustain. High regulation and outsourcing demand more; stable teams need less.',
     drivers: ['D4 Regulation', 'D6 Outsourcing', 'D5 Stability'],
   },
   {
     key: 'recovery',
     label: 'Recovery',
-    question: 'Can you survive failures?',
-    detail: 'Ability to absorb setbacks without collapse — redundancy, fallback processes, ' +
-      'institutional knowledge. Buffers the viability floor and sustains Ops > Cap positions. ' +
-      'High consequence and complexity demand more recovery capacity.',
+    question: 'How well can the project absorb serious setbacks without derailing?',
+    lowLabel: 'Fragile — single points of failure, any serious setback could derail the project',
+    highLabel: 'Resilient — redundancy, documented processes, institutional knowledge absorbs shocks',
+    detail: 'Covers resilience to shocks: key person leaving, major defect found late, environment failure, ' +
+      'supplier problems. Not about preventing failures but surviving them. Projects delivering beyond ' +
+      'their process maturity need recovery capacity to stay viable.',
     drivers: ['D1 Consequence', 'D3 Complexity', 'D8 Coherence'],
   },
   {
     key: 'overwork',
     label: 'Overwork',
-    question: 'Can the team compensate through effort?',
-    detail: 'Short-term team elasticity — overtime, heroics, crunch. Buffers the sufficiency ' +
-      'floor. Uniquely dominant for micro startups. Unsustainable long-term; the model treats ' +
-      'it as a temporary compensator, not a strategy.',
+    question: 'How much extra effort can the team absorb beyond normal capacity?',
+    lowLabel: 'None — team at capacity, burnt out, or constrained (e.g. retention risk)',
+    highLabel: 'Significant — fresh team with spare capacity and willingness to push harder',
+    detail: 'Short-term elasticity: overtime, weekend work, heroics. The model treats this as a ' +
+      'temporary compensator, not a sustainable strategy. Keeps delivery going when processes are ' +
+      'immature — uniquely dominant for micro startups where effort compensates for missing process.',
     drivers: ['D2 Market Pressure', 'D5 Stability', 'D7 Lifecycle'],
   },
   {
     key: 'time',
     label: 'Time',
-    question: 'Can you afford to be slow?',
-    detail: 'Tolerance for delivery delays — market patience, contractual flexibility. ' +
-      'Sustains Cap > Ops positions (investing in capability ahead of delivery). ' +
-      'High market pressure and early lifecycle stages reduce time capacity.',
+    question: 'How much schedule flexibility does the project have?',
+    lowLabel: 'None — hard deadlines, contractual penalties, market windows closing',
+    highLabel: 'Fully flexible — can take as long as needed, no external time pressure',
+    detail: 'Tolerance for delivery delays: market patience, contractual flexibility, ' +
+      'stakeholder expectations. Projects investing in capability ahead of delivery need time ' +
+      'to let that investment mature. High market pressure and early lifecycle reduce time capacity.',
     drivers: ['D2 Market Pressure', 'D7 Lifecycle', 'D4 Regulation'],
   },
 ]
@@ -144,6 +152,10 @@ export default function SliderControls({ sliders, defaults, onChange }) {
             {hoveredSlider === s.key && (
               <div className="mt-1 space-y-1">
                 <p className="text-sm text-[var(--text-secondary)] italic">{s.question}</p>
+                <div className="flex justify-between text-xs text-[var(--text-muted)] gap-4">
+                  <span>0% — {s.lowLabel}</span>
+                  <span className="text-right">100% — {s.highLabel}</span>
+                </div>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{s.detail}</p>
                 <p className="text-sm text-[var(--text-muted)]">
                   Key drivers: <span className="text-[var(--text-secondary)]">{s.drivers.join(', ')}</span>
