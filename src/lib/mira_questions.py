@@ -1513,9 +1513,9 @@ CATEGORY_DEPENDENCIES = [
     },
     {
         "id": "CD-003",
-        "description": "No test lead — skip authority questions",
+        "description": "No test lead — skip authority and leadership questions",
         "trigger": {"question_id": "GOV-C1", "operator": "equals", "value": False},
-        "skip": ["GOV-C2", "GOV-O1", "GOV-O2"],
+        "skip": ["GOV-C2", "GOV-O1", "GOV-O2", "GOV-C4", "GOV-O4", "GOV-O5"],
     },
     {
         "id": "CD-004",

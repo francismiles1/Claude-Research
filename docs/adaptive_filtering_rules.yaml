@@ -149,9 +149,9 @@ category_dependencies:
         - TAM-C3
     user_message: "No automation in place - skipping automation health questions"
 
-  # No test lead = skip test lead authority questions
+  # No test lead = skip test lead authority and leadership questions
   - id: CD-003
-    description: "No test lead - skip authority questions"
+    description: "No test lead - skip authority and leadership questions"
     trigger:
       question_id: GOV-C1
       operator: equals
@@ -162,7 +162,10 @@ category_dependencies:
         - GOV-C2
         - GOV-O1
         - GOV-O2
-    user_message: "No dedicated test lead - skipping test lead authority questions"
+        - GOV-C4
+        - GOV-O4
+        - GOV-O5
+    user_message: "No dedicated test lead - skipping test lead authority and leadership questions"
 
   # Legacy code = ADD legacy-specific questions
   - id: CD-004

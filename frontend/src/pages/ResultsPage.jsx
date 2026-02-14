@@ -344,47 +344,69 @@ export default function ResultsPage() {
             <CostBreakdown breakdown={inspectBreakdown} />
           </div>
 
-          {/* Practitioner calibration save */}
-          {(hasDeviation || assessedCap != null) && (
-            <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4">
-              {saved ? (
-                <div className="flex items-center gap-2 text-sm text-green-400">
-                  <CheckCircle className="w-4 h-4" /> Practitioner calibration saved
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <p className="text-sm text-[var(--text-secondary)]">
-                    <strong className="text-[var(--text-primary)]">Save Practitioner Calibration</strong> — your
-                    slider adjustments help calibrate the model against real-world experience.
-                    {!consentGiven && (
-                      <span className="text-[var(--text-muted)]"> (Saved when you submit on the Feedback page.)</span>
+          {/* Practitioner calibration */}
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-lg p-4">
+            {saved ? (
+              <div className="flex items-center gap-2 text-sm text-green-400">
+                <CheckCircle className="w-4 h-4" /> Practitioner calibration saved
+              </div>
+            ) : hasDeviation ? (
+              <div className="space-y-3">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  <strong className="text-[var(--text-primary)]">Save Practitioner Calibration</strong> — your
+                  slider adjustments help calibrate the model against real-world experience.
+                  {!consentGiven && (
+                    <span className="text-[var(--text-muted)]"> (Saved when you submit on the Feedback page.)</span>
+                  )}
+                </p>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={adjustReason}
+                    onChange={e => setAdjustReason(e.target.value)}
+                    maxLength={200}
+                    placeholder="Why did you adjust? (optional)"
+                    className="flex-1 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                  />
+                  <button
+                    onClick={handleSaveCalibration}
+                    disabled={saving}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
+                  >
+                    {saving ? (
+                      <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
+                    ) : (
+                      <><Save className="w-3.5 h-3.5" /> Save Calibration</>
                     )}
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <input
-                      type="text"
-                      value={adjustReason}
-                      onChange={e => setAdjustReason(e.target.value)}
-                      maxLength={200}
-                      placeholder="Why did you adjust? (optional)"
-                      className="flex-1 bg-[var(--bg-primary)] border border-[var(--border)] rounded-md px-3 py-1.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
-                    />
-                    <button
-                      onClick={handleSaveCalibration}
-                      disabled={saving}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-[var(--accent)] text-white rounded-md hover:bg-[var(--accent-hover)] disabled:opacity-50 transition-colors whitespace-nowrap"
-                    >
-                      {saving ? (
-                        <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
-                      ) : (
-                        <><Save className="w-3.5 h-3.5" /> Save Calibration</>
-                      )}
-                    </button>
-                  </div>
+                  </button>
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-[var(--text-secondary)]">
+                  <strong className="text-[var(--text-primary)]">Practitioner Calibration</strong> — do
+                  the default capacity settings match your real-world project? Confirming
+                  that the model got it right is just as valuable as correcting it.
+                </p>
+                <button
+                  onClick={async () => {
+                    setSaving(true)
+                    await saveCalibration('defaults_confirmed', null)
+                    setSaved(true)
+                    setSaving(false)
+                  }}
+                  disabled={saving}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-emerald-600 text-white rounded-md hover:bg-emerald-500 disabled:opacity-50 transition-colors whitespace-nowrap"
+                >
+                  {saving ? (
+                    <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Saving...</>
+                  ) : (
+                    <><CheckCircle className="w-3.5 h-3.5" /> Defaults Match My Project</>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
