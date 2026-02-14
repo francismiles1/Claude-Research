@@ -138,7 +138,7 @@ function loadPersistedState() {
   }
   // Restore consent from localStorage (persists across tabs/sessions)
   if (!state.consentGiven && localStorage.getItem('capops_consent') === 'true') {
-    state = { ...state, consentGiven: true }
+    state = { ...state, consentGiven: true, sessionId: state.sessionId || uuidv4() }
   }
   return state
 }

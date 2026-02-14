@@ -155,11 +155,11 @@ export default function IdentifyPage() {
     } catch (err) {
       console.error('Submission failed:', err)
       setSubmitting(false)
-      setSubmitError(
-        err.response?.data?.detail
-          || err.message
-          || 'Something went wrong. Please try again.'
-      )
+      const detail = err.response?.data?.detail
+      const msg = typeof detail === 'string' ? detail
+        : Array.isArray(detail) ? detail.map(d => d.msg || JSON.stringify(d)).join('; ')
+        : err.message || 'Something went wrong. Please try again.'
+      setSubmitError(msg)
     }
   }
 
